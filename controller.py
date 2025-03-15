@@ -17,13 +17,20 @@ class MainController:
         # self.view.axis_range_changed.connect(self.handle_axis_range_changed)
         # self.view.sync_rtc.connect(self.handle_sync_rtc)
         # self.view.toggle_recording.connect(self.handle_recording)
-        # self.view.clear_data.connect(self.handle_clear_data)
+        self.view.clear_data.connect(self.handle_clear_data)
         self.view.graph_canvas.hover_signal.connect(self.handle_hover)
 
     def _init_timer(self):
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_plot)
         self.timer.start(2000)
+
+    def handle_clear_data(self):
+        """Clear all data from the model and update the plot."""
+        self.model.data.clear()  # Clear data dictionary
+        self.model.relative_times = []  # Clear timestamps
+        self.model.channel_info = {}  # Clear channel info
+        self.update_plot()  # Refresh the plot
 
     def handle_load_replay(self, filename):
         success = self.model.load_csv(filename)
@@ -78,3 +85,7 @@ class MainController:
 
             # Update the plot in the view
             self.view.graph_canvas.update_plot(x_data, y_data, channels_to_plot, "Time (s)", y_labels)
+        else:
+            # Clear the plot if no data exists
+            self.view.graph_canvas.axes.clear()
+            self.view.graph_canvas.draw()

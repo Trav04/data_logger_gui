@@ -103,7 +103,7 @@ class MainWindowView(QMainWindow):
         # self._create_recording_controls()
         # self._create_alarm_config()
         # self._create_optical_link()
-        # self._create_clear_button()
+        self._create_clear_button()
 
         # Tooltip Label
         self.tooltip_label = QLabel()
@@ -112,6 +112,11 @@ class MainWindowView(QMainWindow):
         self.tooltip_label.hide()
 
         self.status_bar = self.statusBar()
+    def _create_clear_button(self):
+        """Add a button to clear all data."""
+        clear_btn = QPushButton("Clear All Data")
+        clear_btn.clicked.connect(self.clear_data.emit)  # Connect to the clear_data signal
+        self.control_layout.addWidget(clear_btn)
 
     def _create_replay_controls(self):
         group = QGroupBox("Replay")
