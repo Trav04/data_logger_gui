@@ -1,6 +1,6 @@
 # controller.py
 from PyQt5.QtCore import QTimer
-
+import numpy as np
 
 class MainController:
     def __init__(self, model, view):
@@ -18,7 +18,7 @@ class MainController:
         # self.view.sync_rtc.connect(self.handle_sync_rtc)
         # self.view.toggle_recording.connect(self.handle_recording)
         # self.view.clear_data.connect(self.handle_clear_data)
-        # self.view.plot_canvas.hover_signal.connect(self.handle_hover)
+        self.view.graph_canvas.hover_signal.connect(self.handle_hover)
 
     def _init_timer(self):
         self.timer = QTimer()
@@ -36,8 +36,30 @@ class MainController:
     def handle_max_points_changed(self, value):
         self.model.max_points = value
 
-    def handle_visibility_changed(self, active_types):
+    def handle_visibility_changed(self):
         self.update_plot()
+
+    def handle_hover(self, x, global_x, global_y):
+        """Handle hover events on the plot canvas."""
+        if not self.model.data or x is None:
+            self.view.tooltip_label.hide()
+            return
+
+        # Find closest data point
+        closest_idx = np.argmin(np.abs(np.array(self.model.relative_times) - x))
+
+        # Build tooltip text
+        text = f"Time: {self.model.relative_times[closest_idx]:.3f}s\n"
+        for ch, values in self.model.data.items():
+            if ch in self.model.channel_info:
+                unit = self.model.channel_info[ch]['unit']
+                text += f"{ch}: {values[closest_idx]:.2f} {unit}\n"
+
+        # Update tooltip
+        self.view.tooltip_label.setText(text)
+        self.view.tooltip_label.adjustSize()
+        self.view.tooltip_label.move(global_x + 15, global_y + 15)
+        self.view.tooltip_label.show()
 
     def update_plot(self):
         """Update the plots based on the current model data and active channels."""
