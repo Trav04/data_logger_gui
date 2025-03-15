@@ -31,7 +31,7 @@ class GraphCanvas(FigureCanvas):
         self.lines = {}
         self.mpl_connect('motion_notify_event', self.on_hover)
 
-    def update_plot(self, x_data, y_data, channels, x_label, y_labels):
+    def update_plot(self, x_data, y_data, channels, x_label, y_labels, y_min, y_max):
         """
          Updates the plot with new data.
 
@@ -50,6 +50,11 @@ class GraphCanvas(FigureCanvas):
         self.axes.set_xlabel(x_label)
         self.axes.legend()
         self.axes.grid(True)
+        self.axes.set_ylim(y_min, y_max)
+        self.draw()
+
+    def clear_plot(self):
+        self.axes.clear()
         self.draw()
 
     def on_hover(self, event):
@@ -78,6 +83,10 @@ class MainWindowView(QMainWindow):
         self._init_ui()
         self._active_channels = [CHANNEL_TYPE_VOLTAGE, CHANNEL_TYPE_TEMPERATURE, CHANNEL_TYPE_ACCELERATION]
 
+        # Default Y axis controls
+        self._ymin = 0
+        self._ymax = 10
+
     def _init_ui(self):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
@@ -99,7 +108,7 @@ class MainWindowView(QMainWindow):
         # self._create_display_settings()
         self._create_visibility_controls()
         # self._create_device_config()
-        # self._create_axis_config()
+        self._create_axis_controls()
         # self._create_recording_controls()
         # self._create_alarm_config()
         # self._create_optical_link()
@@ -112,6 +121,41 @@ class MainWindowView(QMainWindow):
         self.tooltip_label.hide()
 
         self.status_bar = self.statusBar()
+
+    def _create_axis_controls(self):
+        """Add controls for adjusting the Y-axis range."""
+        axis_group = QGroupBox("Y-Axis Range")
+        axis_layout = QHBoxLayout()
+
+        # Min value spin box
+        self.ymin_spin = QDoubleSpinBox()
+        self.ymin_spin.setRange(-1000, 1000)  # Adjust range as needed
+        self.ymin_spin.setValue(self._ymin)  # Default min value
+        self.ymin_spin.setSingleStep(1)  # Increment/decrement by 1
+        axis_layout.addWidget(QLabel("Min:"))
+        axis_layout.addWidget(self.ymin_spin)
+
+        # Max value spin box
+        self.ymax_spin = QDoubleSpinBox()
+        self.ymax_spin.setRange(-1000, 1000)  # Adjust range as needed
+        self.ymax_spin.setValue(self._ymax)  # Default max value
+        self.ymax_spin.setSingleStep(1)  # Increment/decrement by 1
+        axis_layout.addWidget(QLabel("Max:"))
+        axis_layout.addWidget(self.ymax_spin)
+
+        # Connect spin boxes to signal
+        self.ymin_spin.valueChanged.connect(self._emit_axis_range_changed)
+        self.ymax_spin.valueChanged.connect(self._emit_axis_range_changed)
+
+        axis_group.setLayout(axis_layout)
+        self.control_layout.addWidget(axis_group)
+
+    def _emit_axis_range_changed(self):
+        """Emit signal with updated Y-axis range."""
+        self._ymin = self.ymin_spin.value()
+        self._ymax = self.ymax_spin.value()
+        self.axis_range_changed.emit(self._ymin, self._ymax)
+
     def _create_clear_button(self):
         """Add a button to clear all data."""
         clear_btn = QPushButton("Clear All Data")
@@ -169,3 +213,9 @@ class MainWindowView(QMainWindow):
 
     def get_active_channels(self):
         return self._active_channels
+
+    def get_y_axis(self):
+        return (self._ymin, self._ymax)
+
+    def clear_graph(self):
+        self.graph_canvas.clear_plot()

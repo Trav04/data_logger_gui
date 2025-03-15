@@ -14,7 +14,7 @@ class MainController:
         self.view.load_replay.connect(self.handle_load_replay)
         self.view.max_points_changed.connect(self.handle_max_points_changed)
         self.view.channel_visibility_change.connect(self.handle_visibility_changed)
-        # self.view.axis_range_changed.connect(self.handle_axis_range_changed)
+        self.view.axis_range_changed.connect(self.handle_axis_range_changed)
         # self.view.sync_rtc.connect(self.handle_sync_rtc)
         # self.view.toggle_recording.connect(self.handle_recording)
         self.view.clear_data.connect(self.handle_clear_data)
@@ -24,6 +24,12 @@ class MainController:
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_plot)
         self.timer.start(2000)
+
+    def handle_axis_range_changed(self, ymin, ymax):
+        """Update the Y-axis range of the plot."""
+        self.update_plot()
+        # self.view.graph_canvas.axes.set_ylim(ymin, ymax)
+        # self.view.graph_canvas.draw()  # Redraw the canvas
 
     def handle_clear_data(self):
         """Clear all data from the model and update the plot."""
@@ -82,10 +88,9 @@ class MainController:
                 if self.model.channel_info.get(ch, {}).get('type') in self.view.get_active_channels()
 
             ]
-
+            y_min, y_max = self.view.get_y_axis()
             # Update the plot in the view
-            self.view.graph_canvas.update_plot(x_data, y_data, channels_to_plot, "Time (s)", y_labels)
+            self.view.graph_canvas.update_plot(x_data, y_data, channels_to_plot, "Time (s)", y_labels, y_min, y_max)
         else:
             # Clear the plot if no data exists
-            self.view.graph_canvas.axes.clear()
-            self.view.graph_canvas.draw()
+            self.view.clear_graph()
