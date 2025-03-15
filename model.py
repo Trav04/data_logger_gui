@@ -3,11 +3,16 @@ import csv
 from datetime import datetime
 import numpy as np
 
+CHANNEL_TYPE_VOLTAGE = "Voltage"
+CHANNEL_TYPE_TEMPERATURE = "Temperature"
+CHANNEL_TYPE_ACCELERATION = "Acceleration"
+
+
 UNIT_TYPE_MAP = {
-    'Volts': 'voltage',
-    'V': 'voltage',
-    'C': 'temperature',
-    'm/s^2': 'acceleration'
+    'Volts': 'Voltage',
+    'V': 'Voltage',
+    'C': 'Temperature',
+    'm/s^2': 'Acceleration'
 }
 
 FORMATE_TIMESTAMP = "%Y-%m-%d_%H-%M-%S.%f"

@@ -6,7 +6,6 @@ class MainController:
     def __init__(self, model, view):
         self.model = model
         self.view = view
-        self.active_types = []
 
         self._connect_signals()
         self._init_timer()
@@ -38,7 +37,6 @@ class MainController:
         self.model.max_points = value
 
     def handle_visibility_changed(self, active_types):
-        self.active_types = active_types
         self.update_plot()
 
     def update_plot(self):
@@ -50,10 +48,10 @@ class MainController:
             y_labels = {ch: info['unit'] for ch, info in self.model.channel_info.items()}
 
             # Get active types from the view and filter channels
-            active_types = self.view.get_active_types()
             channels_to_plot = [
                 ch for ch in self.model.data
-                if self.model.channel_info.get(ch, {}).get('type') in active_types
+                if self.model.channel_info.get(ch, {}).get('type') in self.view.get_active_channels()
+
             ]
 
             # Update the plot in the view

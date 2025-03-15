@@ -7,6 +7,10 @@ from PyQt5.QtGui import QColor
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
+from model import CHANNEL_TYPE_ACCELERATION
+from model import CHANNEL_TYPE_TEMPERATURE
+from model import CHANNEL_TYPE_VOLTAGE
+
 class StatusLED(QLabel):
     def __init__(self):
         super().__init__()
@@ -60,7 +64,7 @@ class GraphCanvas(FigureCanvas):
 class MainWindowView(QMainWindow):
     load_replay = pyqtSignal(str)
     max_points_changed = pyqtSignal(int)
-    channel_visibility_change = pyqtSignal(list)
+    channel_visibility_change = pyqtSignal(object)
     axis_range_changed = pyqtSignal(float, float)
     sync_rtc = pyqtSignal()
     toggle_recording = pyqtSignal(bool)
@@ -72,7 +76,7 @@ class MainWindowView(QMainWindow):
         self.setWindowTitle("Data Acquisition System")
         self.setGeometry(100, 100, 1200, 800)
         self._init_ui()
-        self._active_types = []
+        self._active_channels = [CHANNEL_TYPE_VOLTAGE, CHANNEL_TYPE_TEMPERATURE, CHANNEL_TYPE_ACCELERATION]
 
     def _init_ui(self):
         central_widget = QWidget()
@@ -142,21 +146,21 @@ class MainWindowView(QMainWindow):
 
     def _update_active_channels(self):
         """Emit visibility_changed signal with current active types."""
-        self._active_types = []
+        self._active_channels = []
         if self.voltage_check.isChecked():
-            self._active_types.append('voltage')
+            self._active_channels.append(CHANNEL_TYPE_VOLTAGE)
         if self.accel_check.isChecked():
-            self._active_types.append('acceleration')
+            self._active_channels.append(CHANNEL_TYPE_ACCELERATION)
         if self.temp_check.isChecked():
-            self._active_types.append('temperature')
+            self._active_channels.append(CHANNEL_TYPE_TEMPERATURE)
 
         # Invoke a signal to alert the controller
-        self.channel_visibility_change.emit(self._active_types)
-
-    def get_active_types(self):
-        return self._active_types
+        self.channel_visibility_change.emit(None)
 
     def _on_load_replay(self):
         filename, _ = QFileDialog.getOpenFileName(self, "Open CSV File", "", "CSV Files (*.csv)")
         if filename:
             self.load_replay.emit(filename)
+
+    def get_active_channels(self):
+        return self._active_channels
