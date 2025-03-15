@@ -10,6 +10,10 @@ UNIT_TYPE_MAP = {
     'm/s^2': 'acceleration'
 }
 
+FORMATE_TIMESTAMP = "%Y-%m-%d_%H-%M-%S.%f"
+
+TIMESTAMP = "Timestamp"
+
 class DataModel:
     def __init__(self):
         self.data = {}
@@ -24,6 +28,16 @@ class DataModel:
         self.max_points = 1000
 
     def load_csv(self, filename):
+        """
+        Loads data from a CSV file, processes timestamps, and extracts channel information.
+
+        Params:
+            filename (str): The path to the CSV file to be loaded.
+            max_points (int): The maximum number of data points to store.
+
+        Returns:
+            bool: True if the file was successfully loaded, False otherwise.
+        """
         self.data.clear()
         self.relative_times = []
         self.channel_info = {}
@@ -34,7 +48,8 @@ class DataModel:
                 headers = next(reader)
                 headers = [h.strip('\ufeff') for h in headers]
 
-                if len(headers) < 1 or headers[0] != "Timestamp":
+                # Make sure timestamp col exists
+                if len(headers) < 1 or headers[0] != TIMESTAMP:
                     return False
 
                 timestamps = []
@@ -45,33 +60,43 @@ class DataModel:
                         continue
 
                     try:
-                        timestamp = datetime.strptime(row[0], "%Y-%m-%d_%H-%M-%S.%f")
+                        timestamp = datetime.strptime(row[0], FORMATE_TIMESTAMP)
                         timestamps.append(timestamp)
                         for header, value in zip(headers[1:], row[1:]):
                             data[header].append(float(value))
                     except (ValueError, IndexError):
                         continue
 
+                # Timestamps not valid
                 if not timestamps:
                     return False
 
+                # Manage timestamps
                 first_ts = timestamps[0]
                 self.relative_times = [(ts - first_ts).total_seconds() for ts in timestamps]
 
                 for header in headers[1:]:
                     self.data[header] = data[header][:self.max_points]
+
+                # Only plot data within less than or equal to the max_points specified
                 self.relative_times = self.relative_times[:self.max_points]
 
+                # For each of the other headers split into the channel and the unit
                 for header in headers[1:]:
-                    parts = header.split()
-                    unit = parts[1] if len(parts) > 1 else ''
-                    channel_type = UNIT_TYPE_MAP.get(unit, 'unknown')
+                    # Extract unit from header (supports "Channel (V)" or "Channel V")
+                    unit = ""
+                    if '(' in header and ')' in header:
+                        # Handle parentheses format: "Channel (Unit)"
+                        unit = header.split('(')[-1].split(')')[0].strip()
+                    else:
+                        # Handle space-separated format: "Channel Unit"
+                        parts = header.split()
+                        unit = parts[-1] if len(parts) > 1 else ''
+
+                    channel_type = UNIT_TYPE_MAP.get(unit, 'unknown')  # Use 'unknown' as default
                     self.channel_info[header] = {'unit': unit, 'type': channel_type}
 
                 return True
         except Exception as e:
             print(f"Error loading CSV: {str(e)}")
             return False
-
-    def get_active_channels(self, active_types):
-        return [ch for ch in self.data if self.channel_info.get(ch, {}).get('type') in active_types]
