@@ -68,7 +68,7 @@ class GraphCanvas(FigureCanvas):
 
 class MainWindowView(QMainWindow):
     load_replay = pyqtSignal(str)
-    max_points_changed = pyqtSignal(int)
+    max_points = pyqtSignal(int)
     channel_visibility_change = pyqtSignal(object)
     axis_range_changed = pyqtSignal(float, float)
     sync_rtc = pyqtSignal()
@@ -106,7 +106,7 @@ class MainWindowView(QMainWindow):
         main_layout.addWidget(control_panel, 25)
 
         self._create_replay_controls()
-        # self._create_display_settings()
+        self._create_max_point_settings()
         self._create_visibility_controls()
         # self._create_device_config()
         self._create_axis_controls()
@@ -122,6 +122,25 @@ class MainWindowView(QMainWindow):
         self.tooltip_label.hide()
 
         self.status_bar = self.statusBar()
+
+    def _create_max_point_settings(self):
+        """Add controls for display settings like max points."""
+        display_group = QGroupBox("Display Settings")
+        layout = QFormLayout()
+
+        # Max Points SpinBox
+        self.max_points_spin = QSpinBox()
+        self.max_points_spin.setRange(10, 10000)
+        self.max_points_spin.setValue(1000)  # Default value
+        self.max_points_spin.valueChanged.connect(self._emit_max_points_changed)
+        layout.addRow("Max Points:", self.max_points_spin)
+
+        display_group.setLayout(layout)
+        self.control_layout.addWidget(display_group)
+
+    def _emit_max_points_changed(self):
+        """Emit signal when max points changes."""
+        self.max_points.emit(self.max_points_spin.value())
 
     def _create_axis_controls(self):
         """Add controls for adjusting the Y-axis range."""

@@ -15,7 +15,7 @@ UNIT_TYPE_MAP = {
     'm/s^2': 'Acceleration'
 }
 
-FORMATE_TIMESTAMP = "%Y-%m-%d_%H-%M-%S.%f"
+FORMAT_TIMESTAMP = "%Y-%m-%d_%H-%M-%S.%f"
 
 TIMESTAMP = "Timestamp"
 
@@ -30,7 +30,6 @@ class DataModel:
         self.alarm_thresholds = {}
         self.input_ranges = {}
         self.temp_configs = {}
-        self.max_points = 1000
 
     def load_csv(self, filename):
         """
@@ -38,7 +37,6 @@ class DataModel:
 
         Params:
             filename (str): The path to the CSV file to be loaded.
-            max_points (int): The maximum number of data points to store.
 
         Returns:
             bool: True if the file was successfully loaded, False otherwise.
@@ -53,7 +51,7 @@ class DataModel:
                 headers = next(reader)
                 headers = [h.strip('\ufeff') for h in headers]
 
-                # Make sure timestamp col exists
+                # Make sure timestamp column exists
                 if len(headers) < 1 or headers[0] != TIMESTAMP:
                     return False
 
@@ -65,7 +63,7 @@ class DataModel:
                         continue
 
                     try:
-                        timestamp = datetime.strptime(row[0], FORMATE_TIMESTAMP)
+                        timestamp = datetime.strptime(row[0], FORMAT_TIMESTAMP)
                         timestamps.append(timestamp)
                         for header, value in zip(headers[1:], row[1:]):
                             data[header].append(float(value))
@@ -80,13 +78,11 @@ class DataModel:
                 first_ts = timestamps[0]
                 self.relative_times = [(ts - first_ts).total_seconds() for ts in timestamps]
 
+                # Store all data (no truncation)
                 for header in headers[1:]:
-                    self.data[header] = data[header][:self.max_points]
+                    self.data[header] = data[header]
 
-                # Only plot data within less than or equal to the max_points specified
-                self.relative_times = self.relative_times[:self.max_points]
-
-                # For each of the other headers split into the channel and the unit
+                # Extract channel info
                 for header in headers[1:]:
                     # Extract unit from header (supports "Channel (V)" or "Channel V")
                     unit = ""
@@ -105,3 +101,4 @@ class DataModel:
         except Exception as e:
             print(f"Error loading CSV: {str(e)}")
             return False
+

@@ -6,13 +6,14 @@ class MainController:
     def __init__(self, model, view):
         self.model = model
         self.view = view
+        self.current_max_points = 1000  # Track max points in controller
 
         self._connect_signals()
         self._init_timer()
 
     def _connect_signals(self):
         self.view.load_replay.connect(self.handle_load_replay)
-        self.view.max_points_changed.connect(self.handle_max_points_changed)
+        self.view.max_points.connect(self.handle_max_points_changed)
         self.view.channel_visibility_change.connect(self.handle_visibility_changed)
         self.view.axis_range_changed.connect(self.handle_axis_range_changed)
         # self.view.sync_rtc.connect(self.handle_sync_rtc)
@@ -24,6 +25,11 @@ class MainController:
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_plot)
         self.timer.start(2000)
+
+    def handle_max_points_changed(self, max_points):
+        """Update max points and refresh plot."""
+        self.current_max_points = max_points
+        self.update_plot()
 
     def handle_axis_range_changed(self, ymin, ymax):
         """Update the Y-axis range of the plot."""
@@ -45,9 +51,6 @@ class MainController:
         else:
             self.view.status_bar.showMessage("Invalid file format", 5000)
         self.update_plot()
-
-    def handle_max_points_changed(self, value):
-        self.model.max_points = value
 
     def handle_visibility_changed(self):
         self.update_plot()
@@ -75,22 +78,34 @@ class MainController:
         self.view.tooltip_label.show()
 
     def update_plot(self):
-        """Update the plots based on the current model data and active channels."""
+        """Update plots with truncated data based on current_max_points."""
         if self.model.data:
-            # Get data from the model
-            x_data = self.model.relative_times
-            y_data = self.model.data
-            y_labels = {ch: info['unit'] for ch, info in self.model.channel_info.items()}
+            # Truncate data to current_max_points
+            truncated_times = self.model.relative_times[:self.current_max_points]
+            truncated_data = {
+                ch: vals[:self.current_max_points]
+                for ch, vals in self.model.data.items()
+            }
 
-            # Get active types from the view and filter channels
+            # Get active channels and labels
             channels_to_plot = [
                 ch for ch in self.model.data
                 if self.model.channel_info.get(ch, {}).get('type') in self.view.get_active_channels()
-
             ]
+            y_labels = {ch: info['unit'] for ch, info in self.model.channel_info.items()}
+
+            # Get Y-axis range from view
             y_min, y_max = self.view.get_y_axis()
-            # Update the plot in the view
-            self.view.graph_canvas.update_plot(x_data, y_data, channels_to_plot, "Time (s)", y_labels, y_min, y_max)
+
+            # Update plot with truncated data
+            self.view.graph_canvas.update_plot(
+                truncated_times,
+                truncated_data,
+                channels_to_plot,
+                "Time (s)",
+                y_labels,
+                y_min,
+                y_max
+            )
         else:
-            # Clear the plot if no data exists
             self.view.clear_graph()
