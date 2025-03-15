@@ -56,7 +56,7 @@ class MainController:
         self.update_plot()
 
     def handle_hover(self, x, global_x, global_y):
-        """Handle hover events on the plot canvas."""
+        """Handle hover events on the plot canvas, showing tooltips for selected channels."""
         if not self.model.data or x is None:
             self.view.tooltip_label.hide()
             return
@@ -64,10 +64,11 @@ class MainController:
         # Find closest data point
         closest_idx = np.argmin(np.abs(np.array(self.model.relative_times) - x))
 
-        # Build tooltip text
+        # Build tooltip text for selected channels only
         text = f"Time: {self.model.relative_times[closest_idx]:.3f}s\n"
         for ch, values in self.model.data.items():
-            if ch in self.model.channel_info:
+            # Only include channels that are currently visible
+            if ch in self.model.channel_info and self.model.channel_info[ch]['type'] in self.view.get_active_channels():
                 unit = self.model.channel_info[ch]['unit']
                 text += f"{ch}: {values[closest_idx]:.2f} {unit}\n"
 
