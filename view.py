@@ -1,7 +1,7 @@
 # view.py
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QFileDialog, QLabel, QSpinBox, QComboBox, QFormLayout, QGroupBox, QScrollArea,
-                             QCheckBox, QDoubleSpinBox, QLineEdit)
+                             QCheckBox, QDoubleSpinBox, QFrame)
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -106,10 +106,9 @@ class MainWindowView(QMainWindow):
         main_layout.addWidget(control_panel, 25)
 
         self._create_replay_controls()
-        self._create_max_point_settings()
         self._create_visibility_controls()
+        self._create_display_settings()
         # self._create_device_config()
-        self._create_axis_controls()
         # self._create_recording_controls()
         # self._create_alarm_config()
         # self._create_optical_link()
@@ -123,17 +122,43 @@ class MainWindowView(QMainWindow):
 
         self.status_bar = self.statusBar()
 
-    def _create_max_point_settings(self):
-        """Add controls for display settings like max points."""
+    from PyQt5.QtWidgets import QFrame  # Add this import
+
+    def _create_display_settings(self):
+        """Add controls for display settings like Y-axis range and max points."""
         display_group = QGroupBox("Display Settings")
         layout = QFormLayout()
+
+        # Y-Axis Min and Max SpinBoxes
+        self.ymin_spin = QDoubleSpinBox()
+        self.ymin_spin.setRange(-1000, 1000)  # Adjust range as needed
+        self.ymin_spin.setValue(self._ymin)  # Default min value
+        self.ymin_spin.setSingleStep(1)  # Increment/decrement by 1
+        layout.addRow("Y-Axis Min:", self.ymin_spin)
+
+        self.ymax_spin = QDoubleSpinBox()
+        self.ymax_spin.setRange(-1000, 1000)  # Adjust range as needed
+        self.ymax_spin.setValue(self._ymax)  # Default max value
+        self.ymax_spin.setSingleStep(1)  # Increment/decrement by 1
+        layout.addRow("Y-Axis Max:", self.ymax_spin)
+
+        # Add a horizontal separator
+        separator = QFrame()
+        separator.setFrameShape(QFrame.HLine)  # Horizontal line
+        separator.setFrameShadow(QFrame.Sunken)  # Sunken style
+        layout.addRow(separator)  # Add separator to the layout
 
         # Max Points SpinBox
         self.max_points_spin = QSpinBox()
         self.max_points_spin.setRange(10, 10000)
         self.max_points_spin.setValue(1000)  # Default value
-        self.max_points_spin.valueChanged.connect(self._emit_max_points_changed)
+        self.max_points_spin.setKeyboardTracking(True)  # Ensure real-time updates
         layout.addRow("Max Points:", self.max_points_spin)
+
+        # Connect signals
+        self.ymin_spin.valueChanged.connect(self._emit_axis_range_changed)
+        self.ymax_spin.valueChanged.connect(self._emit_axis_range_changed)
+        self.max_points_spin.valueChanged.connect(self._emit_max_points_changed)
 
         display_group.setLayout(layout)
         self.control_layout.addWidget(display_group)
@@ -141,34 +166,6 @@ class MainWindowView(QMainWindow):
     def _emit_max_points_changed(self):
         """Emit signal when max points changes."""
         self.max_points.emit(self.max_points_spin.value())
-
-    def _create_axis_controls(self):
-        """Add controls for adjusting the Y-axis range."""
-        axis_group = QGroupBox("Y-Axis Range")
-        axis_layout = QHBoxLayout()
-
-        # Min value spin box
-        self.ymin_spin = QDoubleSpinBox()
-        self.ymin_spin.setRange(-1000, 1000)  # Adjust range as needed
-        self.ymin_spin.setValue(self._ymin)  # Default min value
-        self.ymin_spin.setSingleStep(1)  # Increment/decrement by 1
-        axis_layout.addWidget(QLabel("Min:"))
-        axis_layout.addWidget(self.ymin_spin)
-
-        # Max value spin box
-        self.ymax_spin = QDoubleSpinBox()
-        self.ymax_spin.setRange(-1000, 1000)  # Adjust range as needed
-        self.ymax_spin.setValue(self._ymax)  # Default max value
-        self.ymax_spin.setSingleStep(1)  # Increment/decrement by 1
-        axis_layout.addWidget(QLabel("Max:"))
-        axis_layout.addWidget(self.ymax_spin)
-
-        # Connect spin boxes to signal
-        self.ymin_spin.valueChanged.connect(self._emit_axis_range_changed)
-        self.ymax_spin.valueChanged.connect(self._emit_axis_range_changed)
-
-        axis_group.setLayout(axis_layout)
-        self.control_layout.addWidget(axis_group)
 
     def _emit_axis_range_changed(self):
         """Emit signal with updated Y-axis range."""
