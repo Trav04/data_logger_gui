@@ -80,12 +80,13 @@ class MainWindowView(QMainWindow):
         super().__init__()
         self.setWindowTitle("Data Acquisition System")
         self.setGeometry(100, 100, 1200, 800)
-        self._init_ui()
         self._active_channels = [CHANNEL_TYPE_VOLTAGE, CHANNEL_TYPE_TEMPERATURE, CHANNEL_TYPE_ACCELERATION]
-
         # Default Y axis controls
         self._ymin = 0
         self._ymax = 10
+
+        self._init_ui()
+
 
     def _init_ui(self):
         central_widget = QWidget()
