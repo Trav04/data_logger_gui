@@ -4,9 +4,9 @@ from datetime import datetime
 import numpy as np
 
 CHANNEL_TYPE_VOLTAGE = "Voltage"
-CHANNEL_TYPE_TEMPERATURE = "Temperature"
+CHANNEL_TYPE_RESISTIVE_TEMPERATURE = "Resistive Temperature"
 CHANNEL_TYPE_ACCELERATION = "Acceleration"
-
+CHANNEL_TYPE_TEMPERATURE = "Temperature"
 
 UNIT_TYPE_MAP = {
     'Volts': 'Voltage',
@@ -18,6 +18,18 @@ UNIT_TYPE_MAP = {
 FORMAT_TIMESTAMP = "%Y-%m-%d_%H-%M-%S.%f"
 
 TIMESTAMP = "Timestamp"
+
+INPUT_RANGE_10V = "+/-10V"
+INPUT_RANGE_1V = "+/-1V"
+ALARM_TYPE_DISABLED = "Disabled"
+ALARM_TYPE_LATCHED = "Latched"
+ALARM_TYPE_LIVE = "Live"
+
+CURRENT_SOURCE_10UA = "10μA"
+CURRENT_SOURCE_200UA = "200μA"
+
+TEMP_SENSOR_THERMISTOR = "Thermistor"
+TEMP_SENSOR_RTD = "Platinum RTD"
 
 class DataModel:
     def __init__(self):
@@ -31,31 +43,22 @@ class DataModel:
         self.input_ranges = {}
         self.temp_configs = {}
         self.channel_configs = {}  # Stores configuration for all channels
-        self.temp_sensor_types = ['Thermistor', 'Platinum RTD']
-        self.current_sources = ['10μA', '200μA']
-        self.input_ranges = ['+/-10V', '+/-1V']
-        self.alarm_types = ['Disabled', 'Latched', 'Live']
 
-    def initialize_channel_config(self, channel):
+    def initialize_channel_config(self, channel, channel_type):
         """Initialize default configuration for a channel"""
         if channel not in self.channel_configs:
             is_voltage = self.channel_info.get(channel, {}).get('type') == 'Voltage'
             self.channel_configs[channel] = {
+                'channel_type': channel_type,
                 'alarm_high': 100,
                 'alarm_low': 0,
-                'input_range': '+/-10V',
-                'alarm_type': 'Disabled',
-                'alarm_state': False,
-                'temp_enabled': False,
-                'current_source': '10μA' if is_voltage else None,
-                'sensor_type': 'Thermistor' if is_voltage else None
+                'input_range': INPUT_RANGE_10V,  # Default to +/-10V
+                'alarm_type': ALARM_TYPE_DISABLED,  # Default to disabled
+                'alarm_state': False,  # Default OFF
+                'temp_enabled': False,  # Default not resistive temperature mode
+                'current_source': '10μA' if channel_type==CHANNEL_TYPE_RESISTIVE_TEMPERATURE else None,
+                'sensor_type': 'Thermistor' if channel_type==CHANNEL_TYPE_RESISTIVE_TEMPERATURE else None
             }
-
-    def update_channel_type(self, channel):
-        """Update channel type if temperature conversion is enabled"""
-        if self.channel_configs[channel]['temp_enabled']:
-            self.channel_info[channel]['type'] = 'Temperature'
-            self.channel_info[channel]['unit'] = 'C'
 
     def load_csv(self, filename):
         """
