@@ -31,34 +31,71 @@ CURRENT_SOURCE_200UA = "200μA"
 TEMP_SENSOR_THERMISTOR = "Thermistor"
 TEMP_SENSOR_RTD = "Platinum RTD"
 
+## Channel CONFIG defines
+CHANNEL_TYPE = 'channel_type'
+ALARM_HIGH = "alarm_high"
+ALARM_LOW = "alarm_low"
+INPUT_RANGE = 'input_range'
+ALARM_STATE = 'alarm_state'
+TEMP_ENABLED = 'temp_enabled'
+CURRENT_SOURCE = 'current_source'
+SENSOR_TYPE = 'sensor_type'
+ALARM_TYPE = 'alarm_type'
+
 class DataModel:
     def __init__(self):
-        self.data = {}
-        self.relative_times = []
+        # Replay data
+        self.replay_data = {}
+        self.replay_relative_times = []
         self.channel_info = {}
-        self.rtc_time = datetime.now()
-        self.recording = False
-        self.optical_link = True
-        self.alarm_thresholds = {}
-        self.input_ranges = {}
-        self.temp_configs = {}
+
+        # Live mode data
         self.channel_configs = {}  # Stores configuration for all channels
+        self.live_data = {channel: [] for channel in range(1, 9)}
+        self.live_relative_times = []
+        self.start_time = None
 
     def initialize_channel_config(self, channel, channel_type):
         """Initialize default configuration for a channel"""
         if channel not in self.channel_configs:
-            is_voltage = self.channel_info.get(channel, {}).get('type') == 'Voltage'
             self.channel_configs[channel] = {
-                'channel_type': channel_type,
-                'alarm_high': 100,
-                'alarm_low': 0,
-                'input_range': INPUT_RANGE_10V,  # Default to +/-10V
-                'alarm_type': ALARM_TYPE_DISABLED,  # Default to disabled
-                'alarm_state': False,  # Default OFF
-                'temp_enabled': False,  # Default not resistive temperature mode
-                'current_source': '10μA' if channel_type==CHANNEL_TYPE_RESISTIVE_TEMPERATURE else None,
-                'sensor_type': 'Thermistor' if channel_type==CHANNEL_TYPE_RESISTIVE_TEMPERATURE else None
+                CHANNEL_TYPE: channel_type,
+                ALARM_HIGH: 100,
+                ALARM_LOW: 0,
+                INPUT_RANGE: INPUT_RANGE_10V,  # Default to +/-10V
+                ALARM_TYPE: ALARM_TYPE_DISABLED,  # Default to disabled
+                ALARM_STATE: False,  # Default OFF
+                TEMP_ENABLED: False,  # Default not resistive temperature mode
+                CURRENT_SOURCE: CURRENT_SOURCE_10UA if channel_type == CHANNEL_TYPE_RESISTIVE_TEMPERATURE else None,
+                SENSOR_TYPE: TEMP_SENSOR_THERMISTOR if channel_type == CHANNEL_TYPE_RESISTIVE_TEMPERATURE else None
             }
+
+    def store_live_data(self, timestamp, channel_values):
+        """
+        Stores live data for all 8 channels using relative time.
+
+        Params:
+            timestamp (datetime): The timestamp of the data sample.
+            channel_values (list): List of 8 float values, one per channel.
+        """
+        if len(channel_values) != 8:
+            raise ValueError("Expected 8 channel values, got {}".format(len(channel_values)))
+
+        # Format the time
+        timestamp_f = datetime.strptime(timestamp, FORMAT_TIMESTAMP)
+
+        # Set initial time reference
+        if self.start_time is None:
+            self.start_time = timestamp_f
+
+        relative_time = (timestamp_f - self.start_time).total_seconds()
+
+        # Compute relative time in seconds
+        self.live_relative_times.append(relative_time)
+
+        # Append channel data
+        for i in range(8):
+            self.live_data[i + 1].append(channel_values[i])
 
     def load_csv(self, filename):
         """
@@ -70,8 +107,9 @@ class DataModel:
         Returns:
             bool: True if the file was successfully loaded, False otherwise.
         """
-        self.data.clear()
-        self.relative_times = []
+        # Clear existing data
+        self.replay_data.clear()
+        self.replay_relative_times = []
         self.channel_info = {}
 
         try:
@@ -105,11 +143,11 @@ class DataModel:
 
                 # Manage timestamps
                 first_ts = timestamps[0]
-                self.relative_times = [(ts - first_ts).total_seconds() for ts in timestamps]
+                self.replay_relative_times = [(ts - first_ts).total_seconds() for ts in timestamps]
 
                 # Store all data (no truncation)
                 for header in headers[1:]:
-                    self.data[header] = data[header]
+                    self.replay_data[header] = data[header]
 
                 # Extract channel info
                 for header in headers[1:]:

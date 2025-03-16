@@ -24,6 +24,8 @@ class MainController:
         # Channel config connects
         self.view.config_group.config_changed.connect(self.handle_config_changed)
 
+    ## TODO Update the channel config in the model, update the entire structure for that channel each time a param changes
+
     def handle_config_changed(self, channel):
         """Handle configuration changes and persist to model."""
 
@@ -120,8 +122,8 @@ class MainController:
 
     def handle_clear_data(self):
         """Clear all data from the model and update the plot."""
-        self.model.data.clear()  # Clear data dictionary
-        self.model.relative_times = []  # Clear timestamps
+        self.model.replay_data.clear()  # Clear data dictionary
+        self.model.replay_relative_times = []  # Clear timestamps
         self.model.channel_info = {}  # Clear channel info
         self.update_plot()  # Refresh the plot
 
@@ -131,7 +133,7 @@ class MainController:
             self.view.status_bar.showMessage(f"Loaded: {filename}", 5000)
             # Populate channel dropdown
             self.view.config_group.channel_combo.clear()
-            self.view.config_group.channel_combo.addItems(self.model.data.keys())
+            self.view.config_group.channel_combo.addItems(self.model.replay_data.keys())
         else:
             self.view.status_bar.showMessage("Invalid file format", 5000)
         self.update_plot()
@@ -141,16 +143,16 @@ class MainController:
 
     def handle_hover(self, x, global_x, global_y):
         """Handle hover events on the plot canvas, showing tooltips for selected channels."""
-        if not self.model.data or x is None:
+        if not self.model.replay_data or x is None:
             self.view.tooltip_label.hide()
             return
 
         # Find closest data point
-        closest_idx = np.argmin(np.abs(np.array(self.model.relative_times) - x))
+        closest_idx = np.argmin(np.abs(np.array(self.model.replay_relative_times) - x))
 
         # Build tooltip text for selected channels only
-        text = f"Time: {self.model.relative_times[closest_idx]:.3f}s\n"
-        for ch, values in self.model.data.items():
+        text = f"Time: {self.model.replay_relative_times[closest_idx]:.3f}s\n"
+        for ch, values in self.model.replay_data.items():
             # Only include channels that are currently visible
             if ch in self.model.channel_info and self.model.channel_info[ch]['type'] in self.view.get_active_channels():
                 unit = self.model.channel_info[ch]['unit']
@@ -164,17 +166,17 @@ class MainController:
 
     def update_plot(self):
         """Update plots with truncated data based on current_max_points."""
-        if self.model.data:
+        if self.model.replay_data:
             # Truncate data to current_max_points
-            truncated_times = self.model.relative_times[:self.current_max_points]
+            truncated_times = self.model.replay_relative_times[:self.current_max_points]
             truncated_data = {
                 ch: vals[:self.current_max_points]
-                for ch, vals in self.model.data.items()
+                for ch, vals in self.model.replay_data.items()
             }
 
             # Get active channels and labels
             channels_to_plot = [
-                ch for ch in self.model.data
+                ch for ch in self.model.replay_data
                 if self.model.channel_info.get(ch, {}).get('type') in self.view.get_active_channels()
             ]
             y_labels = {ch: info['unit'] for ch, info in self.model.channel_info.items()}
