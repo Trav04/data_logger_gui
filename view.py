@@ -136,6 +136,33 @@ class ChannelConfigGroup(QGroupBox):
         if channel:
             self.config_changed.emit(channel)
 
+    def update_ui_from_config(self, config):
+        """Update UI elements from a configuration dictionary."""
+        # Block signals temporarily to prevent feedback loops
+        self.alarm_high_spin.blockSignals(True)
+        self.alarm_low_spin.blockSignals(True)
+        self.input_range_combo.blockSignals(True)
+        self.temp_enable_check.blockSignals(True)
+        self.current_source_combo.blockSignals(True)
+        self.sensor_type_combo.blockSignals(True)
+
+        try:
+            # Update values
+            self.alarm_high_spin.setValue(config['alarm_high'])
+            self.alarm_low_spin.setValue(config['alarm_low'])
+            self.input_range_combo.setCurrentText(config['input_range'])
+            self.temp_enable_check.setChecked(config['resistive_temp_enabled'])
+            self.current_source_combo.setCurrentText(config['current_source'])
+            self.sensor_type_combo.setCurrentText(config['sensor_type'])
+        finally:
+            # Always unblock signals even if errors occur
+            self.alarm_high_spin.blockSignals(False)
+            self.alarm_low_spin.blockSignals(False)
+            self.input_range_combo.blockSignals(False)
+            self.temp_enable_check.blockSignals(False)
+            self.current_source_combo.blockSignals(False)
+            self.sensor_type_combo.blockSignals(False)
+
     def get_selected_channel(self) -> str:
         """Get the currently selected channel name."""
         return self.channel_combo.currentText()

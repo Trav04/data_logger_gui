@@ -25,20 +25,26 @@ class MainController:
         self.view.config_group.config_changed.connect(self.handle_config_changed)
 
     def handle_config_changed(self, channel):
-        """Handle updates to channel configuration."""
-        if not channel:
-            return  # No channel selected
+        """Handle configuration changes and persist to model."""
 
-        # Ensure the channel exists in the model
-        if channel not in self.model.channel_configs:
-            self.model.initialize_channel_config(channel)
+        # Get current UI values
+        config = {
+            'alarm_high': self.view.config_group.get_alarm_high(),
+            'alarm_low': self.view.config_group.get_alarm_low(),
+            'input_range': self.view.config_group.get_input_range(),
+            'resistive_temp_enabled': self.view.config_group.get_temp_enabled(),
+            'current_source': self.view.config_group.get_current_source(),
+            'sensor_type': self.view.config_group.get_sensor_type()
+        }
 
-        # Validate and update the model
-        self._validate_alarm_thresholds(channel)
-        self._update_input_range(channel)
-        self._update_temp_config(channel)
-        self._update_current_source(channel)
-        self._update_sensor_type(channel)
+        # Update model with new config
+        self.model.channel_configs[channel].update(config)
+        print(self.model.channel_configs[channel])
+
+        # Convert voltage to temperature if enabled
+        if config['resistive_temp_enabled']:
+            self.model.update_channel_type(channel)
+
         self.update_plot()
 
     def _update_config_ui(self, channel):
