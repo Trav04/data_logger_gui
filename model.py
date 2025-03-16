@@ -30,6 +30,32 @@ class DataModel:
         self.alarm_thresholds = {}
         self.input_ranges = {}
         self.temp_configs = {}
+        self.channel_configs = {}  # Stores configuration for all channels
+        self.temp_sensor_types = ['Thermistor', 'Platinum RTD']
+        self.current_sources = ['10μA', '200μA']
+        self.input_ranges = ['+/-10V', '+/-1V']
+        self.alarm_types = ['Disabled', 'Latched', 'Live']
+
+    def initialize_channel_config(self, channel):
+        """Initialize default configuration for a channel"""
+        if channel not in self.channel_configs:
+            is_voltage = self.channel_info.get(channel, {}).get('type') == 'Voltage'
+            self.channel_configs[channel] = {
+                'alarm_high': 100,
+                'alarm_low': 0,
+                'input_range': '+/-10V',
+                'alarm_type': 'Disabled',
+                'alarm_state': False,
+                'temp_enabled': False,
+                'current_source': '10μA' if is_voltage else None,
+                'sensor_type': 'Thermistor' if is_voltage else None
+            }
+
+    def update_channel_type(self, channel):
+        """Update channel type if temperature conversion is enabled"""
+        if self.channel_configs[channel]['temp_enabled']:
+            self.channel_info[channel]['type'] = 'Temperature'
+            self.channel_info[channel]['unit'] = 'C'
 
     def load_csv(self, filename):
         """

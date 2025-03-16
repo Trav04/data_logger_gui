@@ -66,6 +66,104 @@ class GraphCanvas(FigureCanvas):
             self.hover_signal.emit(0, 0, 0)
 
 
+class ChannelConfigGroup(QGroupBox):
+    config_changed = pyqtSignal(str)  # Emits channel name when config changes
+
+    def __init__(self):
+        super().__init__("Channel Configuration")
+        self.channel_combo = QComboBox()
+        self.alarm_high_spin = QSpinBox()
+        self.alarm_low_spin = QSpinBox()
+        self.input_range_combo = QComboBox()
+        self.alarm_type_combo = QComboBox()
+        self.alarm_state_led = StatusLED()
+        self.temp_enable_check = QCheckBox("Enable Temperature")
+        self.current_source_combo = QComboBox()
+        self.sensor_type_combo = QComboBox()
+
+        self._setup_ui()
+        self._connect_internal_signals()
+
+    def _setup_ui(self):
+        layout = QFormLayout()
+
+        # Channel Selection
+        layout.addRow(QLabel("Channel:"), self.channel_combo)
+
+        # Alarm Settings
+        self.alarm_high_spin.setRange(-10000, 10000)
+        self.alarm_low_spin.setRange(-10000, 10000)
+        layout.addRow(QLabel("Alarm High:"), self.alarm_high_spin)
+        layout.addRow(QLabel("Alarm Low:"), self.alarm_low_spin)
+
+        # Input Range
+        self.input_range_combo.addItems(['+/-10V', '+/-1V'])
+        layout.addRow(QLabel("Input Range:"), self.input_range_combo)
+
+        # Alarm State
+        self.alarm_type_combo.addItems(['Disabled', 'Latched', 'Live'])
+        self.alarm_type_combo.setEnabled(False)
+        layout.addRow(QLabel("Alarm Type:"), self.alarm_type_combo)
+        layout.addRow(QLabel("Alarm State (ON / OFF):"), self.alarm_state_led)
+
+        # Temperature Conversion
+        self.temp_enable_check.toggled.connect(self._toggle_temp_config)
+        self.current_source_combo.addItems(['10μA', '200μA'])
+        self.sensor_type_combo.addItems(['Thermistor', 'Platinum RTD'])
+        temp_layout = QHBoxLayout()
+        temp_layout.addWidget(self.current_source_combo)
+        temp_layout.addWidget(self.sensor_type_combo)
+        layout.addRow(self.temp_enable_check, temp_layout)
+
+        self.setLayout(layout)
+
+    def _toggle_temp_config(self, checked):
+        self.current_source_combo.setVisible(checked)
+        self.sensor_type_combo.setVisible(checked)
+
+    def _connect_internal_signals(self):
+        """Connect all UI changes to emit config_changed."""
+        self.alarm_high_spin.valueChanged.connect(self._emit_config_changed)
+        self.alarm_low_spin.valueChanged.connect(self._emit_config_changed)
+        self.input_range_combo.currentTextChanged.connect(self._emit_config_changed)
+        self.temp_enable_check.toggled.connect(self._emit_config_changed)
+        self.current_source_combo.currentTextChanged.connect(self._emit_config_changed)
+        self.sensor_type_combo.currentTextChanged.connect(self._emit_config_changed)
+
+    def _emit_config_changed(self):
+        """Emit signal with the currently selected channel."""
+        channel = self.get_selected_channel()
+        if channel:
+            self.config_changed.emit(channel)
+
+    def get_selected_channel(self) -> str:
+        """Get the currently selected channel name."""
+        return self.channel_combo.currentText()
+
+    def get_alarm_high(self) -> int:
+        """Get the current alarm high value."""
+        return self.alarm_high_spin.value()
+
+    def get_alarm_low(self) -> int:
+        """Get the current alarm low value."""
+        return self.alarm_low_spin.value()
+
+    def get_input_range(self) -> str:
+        """Get the selected input range."""
+        return self.input_range_combo.currentText()
+
+    def get_temp_enabled(self) -> bool:
+        """Check if temperature conversion is enabled."""
+        return self.temp_enable_check.isChecked()
+
+    def get_current_source(self) -> str:
+        """Get the selected current source."""
+        return self.current_source_combo.currentText()
+
+    def get_sensor_type(self) -> str:
+        """Get the selected sensor type."""
+        return self.sensor_type_combo.currentText()
+
 class MainWindowView(QMainWindow):
     load_replay = pyqtSignal(str)
     max_points = pyqtSignal(int)
@@ -104,6 +202,10 @@ class MainWindowView(QMainWindow):
         control_panel.setWidget(control_widget)
         control_panel.setWidgetResizable(True)
         main_layout.addWidget(control_panel, 25)
+
+        # Add Channel Configuration Group
+        self.config_group = ChannelConfigGroup()
+        self.control_layout.addWidget(self.config_group)
 
         self._create_replay_controls()
         self._create_visibility_controls()
