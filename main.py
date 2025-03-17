@@ -55,11 +55,7 @@ def main():
     #     model.store_live_data(ts, values)
     #
     #     # Print the current state after adding the new data point.
-    #     print("After adding data point:")
-    #     print("Relative Times (s):", model.live_relative_times)
-    #     for ch in sorted(model.live_data.keys()):
-    #         print(f"Channel {ch}: {model.live_data[ch]}")
-    #     print("----------\n")
+
     # # Run the application
     sys.exit(app.exec_())
 

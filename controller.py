@@ -6,7 +6,7 @@ class MainController:
     def __init__(self, model, view):
         self.model = model
         self.view = view
-        self.current_max_points = 1000  # Track max points in controller
+        self.current_max_points = 1000  # Track max points in controller (User input)
 
         self._connect_signals()
         self._init_timer()
