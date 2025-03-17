@@ -37,6 +37,8 @@ class GraphCanvas(FigureCanvas):
         self._y_min = 0
         self._y_max = 10
 
+        self._active_channels = [CHANNEL_TYPE_VOLTAGE, CHANNEL_TYPE_TEMPERATURE, CHANNEL_TYPE_ACCELERATION]
+
     def update_plot(self, x_data, y_data, voltage_channels, acceleration_channels, temperature_channels, x_label, y_labels, y_min, y_max):
         """Update plots with data on respective subplots."""
         # Clear previous plots
@@ -45,35 +47,38 @@ class GraphCanvas(FigureCanvas):
         self.ax_temperature.clear()
 
         # Plot Voltage channels
-        for ch in voltage_channels:
-            if ch in y_data:
-                line, = self.ax_voltage.plot(x_data, y_data[ch], marker='x', linestyle='-', label=f"{ch} ({y_labels[ch]})")
-                self.lines[ch] = line
-        self.ax_voltage.legend()
-        self.ax_voltage.grid(True)
-        self.ax_voltage.set_ylabel('Voltage V')
-        self.ax_voltage.set_ylim(y_min, y_max)
+        if CHANNEL_TYPE_VOLTAGE in self._active_channels:
+            for ch in voltage_channels:
+                if ch in y_data:
+                    line, = self.ax_voltage.plot(x_data, y_data[ch], marker='x', linestyle='-', label=f"{ch} ({y_labels[ch]})")
+                    self.lines[ch] = line
+            self.ax_voltage.legend()
+            self.ax_voltage.grid(True)
+            self.ax_voltage.set_ylabel('Voltage V')
+            self.ax_voltage.set_ylim(y_min, y_max)
 
         # Plot Acceleration channels
-        for ch in acceleration_channels:
-            if ch in y_data:
-                line, = self.ax_acceleration.plot(x_data, y_data[ch], marker='x', linestyle='-', label=f"{ch} ({y_labels[ch]})")
-                self.lines[ch] = line
-        self.ax_acceleration.legend()
-        self.ax_acceleration.grid(True)
-        self.ax_acceleration.set_ylabel('Acceleration m/s^2')
-        self.ax_acceleration.set_ylim(y_min, y_max)
+        if CHANNEL_TYPE_ACCELERATION in self._active_channels:
+            for ch in acceleration_channels:
+                if ch in y_data:
+                    line, = self.ax_acceleration.plot(x_data, y_data[ch], marker='x', linestyle='-', label=f"{ch} ({y_labels[ch]})")
+                    self.lines[ch] = line
+            self.ax_acceleration.legend()
+            self.ax_acceleration.grid(True)
+            self.ax_acceleration.set_ylabel('Acceleration m/s^2')
+            self.ax_acceleration.set_ylim(y_min, y_max)
 
         # Plot Temperature channels
-        for ch in temperature_channels:
-            if ch in y_data:
-                line, = self.ax_temperature.plot(x_data, y_data[ch], marker='x', linestyle='-', label=f"{ch} ({y_labels[ch]})")
-                self.lines[ch] = line
-        self.ax_temperature.legend()
-        self.ax_temperature.grid(True)
-        self.ax_temperature.set_ylabel('Temperature C')
-        self.ax_temperature.set_xlabel(x_label)
-        self.ax_temperature.set_ylim(y_min, y_max)
+        if CHANNEL_TYPE_TEMPERATURE in self._active_channels:
+            for ch in temperature_channels:
+                if ch in y_data:
+                    line, = self.ax_temperature.plot(x_data, y_data[ch], marker='x', linestyle='-', label=f"{ch} ({y_labels[ch]})")
+                    self.lines[ch] = line
+            self.ax_temperature.legend()
+            self.ax_temperature.grid(True)
+            self.ax_temperature.set_ylabel('Temperature C')
+            self.ax_temperature.set_xlabel(x_label)
+            self.ax_temperature.set_ylim(y_min, y_max)
 
         self.fig.tight_layout()
         self.draw()
@@ -101,6 +106,9 @@ class GraphCanvas(FigureCanvas):
         self.ax_acceleration.clear()
         self.ax_temperature.clear()
         self.draw()
+
+    def set_active_channels(self, active_channels):
+        self._active_channels = active_channels
 
     def on_hover(self, event):
         """Handle hover events across all subplots."""
@@ -251,7 +259,6 @@ class MainWindowView(QMainWindow):
         super().__init__()
         self.setWindowTitle("Data Acquisition System")
         self.setGeometry(100, 100, 1200, 800)
-        self._active_channels = [CHANNEL_TYPE_VOLTAGE, CHANNEL_TYPE_TEMPERATURE, CHANNEL_TYPE_ACCELERATION]
         # Default Y axis controls
         self._ymin = 0
         self._ymax = 10
@@ -387,13 +394,15 @@ class MainWindowView(QMainWindow):
 
     def _update_active_channels(self):
         """Emit visibility_changed signal with current active types."""
-        self._active_channels = []
+        active_channels = []  # Reset active channels
         if self.voltage_check.isChecked():
-            self._active_channels.append(CHANNEL_TYPE_VOLTAGE)
+           active_channels.append(CHANNEL_TYPE_VOLTAGE)
         if self.accel_check.isChecked():
-            self._active_channels.append(CHANNEL_TYPE_ACCELERATION)
+            active_channels.append(CHANNEL_TYPE_ACCELERATION)
         if self.temp_check.isChecked():
-            self._active_channels.append(CHANNEL_TYPE_TEMPERATURE)
+            active_channels.append(CHANNEL_TYPE_TEMPERATURE)
+
+        self.graph_canvas.set_active_channels(active_channels)  # Redefine the active channels
 
         # Invoke a signal to alert the controller
         self.channel_visibility_change.emit(None)
@@ -403,11 +412,8 @@ class MainWindowView(QMainWindow):
         if filename:
             self.load_replay.emit(filename)
 
-    def get_active_channels(self):
-        return self._active_channels
-
     def get_y_axis(self):
-        return (self._ymin, self._ymax)
+        return self._ymin, self._ymax
 
     def get_graph_canvas(self):
         return self.graph_canvas
