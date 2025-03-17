@@ -130,10 +130,7 @@ class MainController:
 
     def handle_clear_data(self):
         """Clear all data from the model and update the plot."""
-        self.model.replay_data.clear()  # Clear data dictionary
-        self.model.replay_relative_times = []  # Clear timestamps
-        self.model.channel_info = {}  # Clear channel info
-        self.update_plot()  # Refresh the plot
+        self.view.clear_graph()
 
     def handle_load_replay(self, filename):
         success = self.model.load_csv(filename)
