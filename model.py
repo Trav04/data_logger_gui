@@ -17,6 +17,13 @@ UNIT_TYPE_MAP = {
     'm/s^2': CHANNEL_TYPE_ACCELERATION
 }
 
+CHANNEL_TYPE_MAP = {
+    CHANNEL_TYPE_VOLTAGE : "V",
+    CHANNEL_TYPE_TEMPERATURE : "C",
+    CHANNEL_TYPE_ACCELERATION : "m/s^2",
+    CHANNEL_TYPE_RESISTIVE_TEMPERATURE : "C"
+}
+
 FORMAT_TIMESTAMP = "%Y-%m-%d_%H-%M-%S.%f"
 
 TIMESTAMP = "Timestamp"
@@ -137,7 +144,6 @@ class DataModel:
                     else:
                         parts = header.split()
                         unit = parts[-1] if len(parts) > 1 else ''
-                    print(unit)
                     channel_type = UNIT_TYPE_MAP.get(unit, CHANNEL_TYPE_VOLTAGE)
                     self._update_channel_type(channel_num, channel_type)
 
@@ -168,6 +174,15 @@ class DataModel:
         except Exception as e:
             print(f"Error loading CSV: {str(e)}")
             return False
+
+    def get_data(self):
+        return self.live_data
+
+    def get_relative_times(self):
+        return self.live_relative_times
+
+    def get_channel_configs(self):
+        return self.channel_configs
 
 
     # def load_csv(self, filename):

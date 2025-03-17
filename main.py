@@ -27,7 +27,7 @@ def main():
     model.initialize_channel_config(7, CHANNEL_TYPE_ACCELERATION)
     model.initialize_channel_config(8, CHANNEL_TYPE_TEMPERATURE)
 
-    pprint(model.channel_configs)
+    # pprint(model.channel_configs)
     # Show the main window
     view.show()
 

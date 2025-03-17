@@ -2,6 +2,14 @@
 from PyQt5.QtCore import QTimer
 import numpy as np
 
+from model import CHANNEL_TYPE_VOLTAGE
+from model import CHANNEL_TYPE_TEMPERATURE
+from model import CHANNEL_TYPE_ACCELERATION
+from model import CHANNEL_TYPE_RESISTIVE_TEMPERATURE
+
+from model import CHANNEL_TYPE
+from model import CHANNEL_TYPE_MAP
+
 class MainController:
     def __init__(self, model, view):
         self.model = model
@@ -166,29 +174,47 @@ class MainController:
 
     def update_plot(self):
         """Update plots with truncated data based on current_max_points."""
-        if self.model.replay_data:
+        plot_data = self.model.get_data()
+        if plot_data:
             # Truncate data to current_max_points
-            truncated_times = self.model.replay_relative_times[:self.current_max_points]
+            relative_times = self.model.get_relative_times()
+            truncated_times = relative_times[:self.current_max_points]
             truncated_data = {
                 ch: vals[:self.current_max_points]
-                for ch, vals in self.model.replay_data.items()
+                for ch, vals in plot_data.items()
             }
 
             # Get active channels and labels
+            channels = self.model.get_channel_configs()
             channels_to_plot = [
-                ch for ch in self.model.replay_data
-                if self.model.channel_info.get(ch, {}).get('type') in self.view.get_active_channels()
+                ch for ch in channels.keys()
+                # if self.model.channel_info.get(ch, {}).get('type') in self.view.get_active_channels()
             ]
-            y_labels = {ch: info['unit'] for ch, info in self.model.channel_info.items()}
+            y_labels = {ch: CHANNEL_TYPE_MAP.get(config[CHANNEL_TYPE], 'Unknown') for ch, config in channels.items()}
+
+            # Group channels by types
+            voltage_channels = []
+            acceleration_channels = []
+            temperature_channels = []
+            for ch in channels_to_plot:
+                ch_type = channels[ch][CHANNEL_TYPE]
+                if ch_type == CHANNEL_TYPE_VOLTAGE:
+                    voltage_channels.append(ch)
+                elif ch_type == CHANNEL_TYPE_ACCELERATION:
+                    acceleration_channels.append(ch)
+                elif ch_type in [CHANNEL_TYPE_TEMPERATURE, CHANNEL_TYPE_RESISTIVE_TEMPERATURE]:
+                    temperature_channels.append(ch)
 
             # Get Y-axis range from view
             y_min, y_max = self.view.get_y_axis()
 
-            # Update plot with truncated data
+            # Update plot with grouped channels
             self.view.graph_canvas.update_plot(
                 truncated_times,
                 truncated_data,
-                channels_to_plot,
+                voltage_channels,
+                acceleration_channels,
+                temperature_channels,
                 "Time (s)",
                 y_labels,
                 y_min,

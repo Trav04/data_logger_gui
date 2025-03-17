@@ -25,40 +25,66 @@ class GraphCanvas(FigureCanvas):
     hover_signal = pyqtSignal(float, int, int)  # xdata, global_x, global_y
 
     def __init__(self):
-        self.fig = Figure(figsize=(10, 6))
+        self.fig = Figure(figsize=(10, 8))
         super().__init__(self.fig)
-        self.axes = self.fig.add_subplot(111)
-        self.lines = {}
+        # Create three vertically stacked subplots
+        self.ax_voltage = self.fig.add_subplot(3, 1, 1)
+        self.ax_acceleration = self.fig.add_subplot(3, 1, 2, sharex=self.ax_voltage)
+        self.ax_temperature = self.fig.add_subplot(3, 1, 3, sharex=self.ax_voltage)
+        self.lines = {}  # Track lines for each channel
         self.mpl_connect('motion_notify_event', self.on_hover)
 
-    def update_plot(self, x_data, y_data, channels, x_label, y_labels, y_min, y_max):
-        """
-         Updates the plot with new data.
+    def update_plot(self, x_data, y_data, voltage_channels, acceleration_channels, temperature_channels, x_label, y_labels, y_min, y_max):
+        """Update plots with data on respective subplots."""
+        # Clear previous plots
+        self.ax_voltage.clear()
+        self.ax_acceleration.clear()
+        self.ax_temperature.clear()
 
-         Params:
-             x_data (list or array): X-axis values.
-             y_data (dict): Dictionary mapping channel names to Y-axis values.
-             channels (list): List of channel names to plot.
-             x_label (str): Label for the X-axis.
-             y_labels (dict): Dictionary mapping channel names to Y-axis labels.
-         """
-        self.axes.clear()
-        for ch in channels:
+        # Plot Voltage channels
+        for ch in voltage_channels:
             if ch in y_data:
-                line, = self.axes.plot(x_data, y_data[ch], marker='x', linestyle='-', label=f"{ch} ({y_labels[ch]})")
+                line, = self.ax_voltage.plot(x_data, y_data[ch], marker='x', linestyle='-', label=f"{ch} ({y_labels[ch]})")
                 self.lines[ch] = line
-        self.axes.set_xlabel(x_label)
-        self.axes.legend()
-        self.axes.grid(True)
-        self.axes.set_ylim(y_min, y_max)
+        self.ax_voltage.legend()
+        self.ax_voltage.grid(True)
+        self.ax_voltage.set_ylabel('Voltage')
+        self.ax_voltage.set_ylim(y_min, y_max)
+
+        # Plot Acceleration channels
+        for ch in acceleration_channels:
+            if ch in y_data:
+                line, = self.ax_acceleration.plot(x_data, y_data[ch], marker='x', linestyle='-', label=f"{ch} ({y_labels[ch]})")
+                self.lines[ch] = line
+        self.ax_acceleration.legend()
+        self.ax_acceleration.grid(True)
+        self.ax_acceleration.set_ylabel('Acceleration')
+        self.ax_acceleration.set_ylim(y_min, y_max)
+
+        # Plot Temperature channels
+        for ch in temperature_channels:
+            if ch in y_data:
+                line, = self.ax_temperature.plot(x_data, y_data[ch], marker='x', linestyle='-', label=f"{ch} ({y_labels[ch]})")
+                self.lines[ch] = line
+        self.ax_temperature.legend()
+        self.ax_temperature.grid(True)
+        self.ax_temperature.set_ylabel('Temperature')
+        self.ax_temperature.set_xlabel(x_label)
+        self.ax_temperature.set_ylim(y_min, y_max)
+
+        self.fig.tight_layout()
         self.draw()
 
     def clear_plot(self):
-        self.axes.clear()
+        """Clear all subplots."""
+        self.ax_voltage.clear()
+        self.ax_acceleration.clear()
+        self.ax_temperature.clear()
         self.draw()
 
     def on_hover(self, event):
-        if event.inaxes:
+        """Handle hover events across all subplots."""
+        if event.inaxes in [self.ax_voltage, self.ax_acceleration, self.ax_temperature]:
             x = event.xdata
             pos = event.guiEvent.globalPos()
             self.hover_signal.emit(x, pos.x(), pos.y())
