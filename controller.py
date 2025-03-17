@@ -122,15 +122,13 @@ class MainController:
         self.current_max_points = max_points
         self.update_plot()
 
-    def handle_axis_range_changed(self, ymin, ymax):
+    def handle_axis_range_changed(self, y_min, y_max):
         """Update the Y-axis range of the plot."""
-        self.update_plot()
-        # self.view.graph_canvas.axes.set_ylim(ymin, ymax)
-        # self.view.graph_canvas.draw()  # Redraw the canvas
+        self.view.get_graph_canvas().set_y_lim(y_min, y_max)
 
     def handle_clear_data(self):
         """Clear all data from the model and update the plot."""
-        self.view.clear_graph()
+        self.view.get_graph_canvas().clear_plot()
 
     def handle_load_replay(self, filename):
         success = self.model.load_csv(filename)
@@ -153,7 +151,6 @@ class MainController:
             return
 
         relative_times = self.model.get_relative_times()
-        print(relative_times)
         # Find closest data point
         closest_idx = np.argmin(np.abs(np.array(relative_times) - x))
 
@@ -204,7 +201,7 @@ class MainController:
                     temperature_channels.append(ch)
 
             # Get Y-axis range from view
-            y_min, y_max = self.view.get_y_axis()
+            y_min, y_max = self.view.get_graph_canvas().get_y_axis()
 
             # Update plot with grouped channels
             self.view.graph_canvas.update_plot(
@@ -219,4 +216,4 @@ class MainController:
                 y_max
             )
         else:
-            self.view.clear_graph()
+            self.view.get_graph_canvas().clear_plot()

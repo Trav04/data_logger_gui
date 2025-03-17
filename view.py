@@ -34,6 +34,9 @@ class GraphCanvas(FigureCanvas):
         self.lines = {}  # Track lines for each channel
         self.mpl_connect('motion_notify_event', self.on_hover)
 
+        self._y_min = 0
+        self._y_max = 10
+
     def update_plot(self, x_data, y_data, voltage_channels, acceleration_channels, temperature_channels, x_label, y_labels, y_min, y_max):
         """Update plots with data on respective subplots."""
         # Clear previous plots
@@ -74,6 +77,23 @@ class GraphCanvas(FigureCanvas):
 
         self.fig.tight_layout()
         self.draw()
+
+    def set_y_lim(self, y_min, y_max):
+        """
+        Set synchronized Y-axis limits for all subplots
+        Params:
+            y_min (float): Minimum Y-axis value
+            y_max (float): Maximum Y-axis value
+        """
+        self._y_min = y_min
+        self._y_max = y_max
+        self.ax_voltage.set_ylim(y_min, y_max)
+        self.ax_acceleration.set_ylim(y_min, y_max)
+        self.ax_temperature.set_ylim(y_min, y_max)
+        self.draw()
+
+    def get_y_axis(self):
+        return self._y_min, self._y_max
 
     def clear_plot(self):
         """Clear all subplots."""
@@ -388,6 +408,9 @@ class MainWindowView(QMainWindow):
 
     def get_y_axis(self):
         return (self._ymin, self._ymax)
+
+    def get_graph_canvas(self):
+        return self.graph_canvas
 
     def clear_graph(self):
         self.graph_canvas.clear_plot()
