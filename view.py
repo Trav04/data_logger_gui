@@ -51,7 +51,7 @@ class GraphCanvas(FigureCanvas):
                 self.lines[ch] = line
         self.ax_voltage.legend()
         self.ax_voltage.grid(True)
-        self.ax_voltage.set_ylabel('Voltage')
+        self.ax_voltage.set_ylabel('Voltage V')
         self.ax_voltage.set_ylim(y_min, y_max)
 
         # Plot Acceleration channels
@@ -61,7 +61,7 @@ class GraphCanvas(FigureCanvas):
                 self.lines[ch] = line
         self.ax_acceleration.legend()
         self.ax_acceleration.grid(True)
-        self.ax_acceleration.set_ylabel('Acceleration')
+        self.ax_acceleration.set_ylabel('Acceleration m/s^2')
         self.ax_acceleration.set_ylim(y_min, y_max)
 
         # Plot Temperature channels
@@ -71,7 +71,7 @@ class GraphCanvas(FigureCanvas):
                 self.lines[ch] = line
         self.ax_temperature.legend()
         self.ax_temperature.grid(True)
-        self.ax_temperature.set_ylabel('Temperature')
+        self.ax_temperature.set_ylabel('Temperature C')
         self.ax_temperature.set_xlabel(x_label)
         self.ax_temperature.set_ylim(y_min, y_max)
 
