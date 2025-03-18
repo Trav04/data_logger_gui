@@ -128,6 +128,10 @@ class MainController:
             return
 
         relative_times = self.model.get_relative_times()
+
+        if not relative_times:  # Don't show tooltip if no data (avoid crashing)
+            return
+
         # Find closest data point
         closest_idx = np.argmin(np.abs(np.array(relative_times) - x))
 
