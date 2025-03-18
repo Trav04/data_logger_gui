@@ -112,7 +112,9 @@ class GraphCanvas(FigureCanvas):
 
     def on_hover(self, event):
         """Handle hover events across all subplots."""
-        if event.inaxes in [self.ax_voltage, self.ax_acceleration, self.ax_temperature]:
+        if (event.inaxes in [self.ax_voltage, self.ax_acceleration, self.ax_temperature]
+                and event.xdata is not None
+                and event.guiEvent is not None):  # Check guiEvent exists
             x = event.xdata
             pos = event.guiEvent.globalPos()
             self.hover_signal.emit(x, pos.x(), pos.y())
@@ -287,13 +289,19 @@ class MainWindowView(QMainWindow):
         self.config_group = ChannelConfigGroup()
         self.control_layout.addWidget(self.config_group)
 
+        # Replay group
         self._create_replay_controls()
+
+        # Visibility group
         self._create_visibility_controls()
+
+        # Display Settings group
         self._create_display_settings()
-        # self._create_device_config()
-        # self._create_recording_controls()
-        # self._create_alarm_config()
-        # self._create_optical_link()
+
+        # Device status group
+        self._create_device_status_panel()
+
+        # Clear data button
         self._create_clear_button()
 
         # Tooltip Label
@@ -391,6 +399,42 @@ class MainWindowView(QMainWindow):
         self.voltage_check.stateChanged.connect(self._update_active_channels)
         self.accel_check.stateChanged.connect(self._update_active_channels)
         self.temp_check.stateChanged.connect(self._update_active_channels)
+
+    def _create_device_status_panel(self):
+        """Creates a device status group with hardcoded Optical Link and Recording indicators."""
+        status_group = QGroupBox("Device Status")
+        status_layout = QFormLayout()
+
+        # Optical Link Status
+        self.optical_status = QLabel("Disconnected")  # Default to disconnected
+        self.optical_status.setStyleSheet("color: red;")
+        status_layout.addRow("Optical Link:", self.optical_status)
+
+        # Recording Status and Button
+        recording_layout = QHBoxLayout()
+        self.recording_status = QLabel("Not Recording")  # Default to not recording
+        self.recording_status.setStyleSheet("color: red;")
+        recording_layout.addWidget(self.recording_status)
+
+        self.toggle_recording_btn = QPushButton("Start Recording")
+        self.toggle_recording_btn.clicked.connect(lambda: self.toggle_recording.emit(True))
+        recording_layout.addWidget(self.toggle_recording_btn)
+        status_layout.addRow("Recording:", recording_layout)
+
+        # RTC Status and Button
+        rtc_layout = QHBoxLayout()
+        self.rtc_status = QLabel("Not Synced")
+        self.rtc_status.setStyleSheet("color: red;")
+        rtc_layout.addWidget(self.rtc_status)
+
+        sync_rtc_btn = QPushButton("Sync RTC")
+        sync_rtc_btn.clicked.connect(self.sync_rtc.emit)
+        rtc_layout.addWidget(sync_rtc_btn)
+        status_layout.addRow("RTC:", rtc_layout)
+
+        status_group.setLayout(status_layout)
+        self.control_layout.addWidget(status_group)
+
 
     def _update_active_channels(self):
         """Emit visibility_changed signal with current active types."""

@@ -30,32 +30,9 @@ class MainController:
         self.view.graph_canvas.hover_signal.connect(self.handle_hover)
 
         # Channel config connects
-        self.view.config_group.config_changed.connect(self.handle_config_changed)
+        # self.view.config_group.config_changed.connect(self.handle_config_changed)
 
     ## TODO Update the channel config in the model, update the entire structure for that channel each time a param changes
-
-    def handle_config_changed(self, channel):
-        """Handle configuration changes and persist to model."""
-
-        # Get current UI values
-        config = {
-            'alarm_high': self.view.config_group.get_alarm_high(),
-            'alarm_low': self.view.config_group.get_alarm_low(),
-            'input_range': self.view.config_group.get_input_range(),
-            'resistive_temp_enabled': self.view.config_group.get_temp_enabled(),
-            'current_source': self.view.config_group.get_current_source(),
-            'sensor_type': self.view.config_group.get_sensor_type()
-        }
-
-        # Update model with new config
-        self.model.channel_configs[channel].update(config)
-        print(self.model.channel_configs[channel])
-
-        # Convert voltage to temperature if enabled
-        if config['resistive_temp_enabled']:
-            self.model.update_channel_type(channel)
-
-        self.update_plot()
 
     def _update_config_ui(self, channel):
         """Update UI with current channel configuration"""
@@ -79,38 +56,37 @@ class MainController:
         self.view.config_group.current_source_combo.setCurrentText(config['current_source'])
         self.view.config_group.sensor_type_combo.setCurrentText(config['sensor_type'])
 
-    def _validate_alarm_thresholds(self, channel):
-        """Validate and update alarm thresholds for a channel."""
-        high = self.view.config_group.get_alarm_high()
-        low = self.view.config_group.get_alarm_low()
-
-        if high < low:
-            self.view.config_group.alarm_high_spin.setValue(low)
-            high = low
-
-        self.model.channel_configs[channel]['alarm_high'] = high
-        self.model.channel_configs[channel]['alarm_low'] = low
-
-    def _update_input_range(self, channel):
-        """Update input range for a channel."""
-        input_range = self.view.config_group.get_input_range()
-        self.model.channel_configs[channel]['input_range'] = input_range
-
-    def _update_temp_config(self, channel):
-        """Update temperature conversion for a channel."""
-        enabled = self.view.config_group.get_temp_enabled()
-        self.model.channel_configs[channel]['resistive_temp_enabled'] = enabled
-        self.model.update_channel_type(channel)
-
-    def _update_current_source(self, channel):
-        """Update current source for a channel."""
-        current_source = self.view.config_group.get_current_source()
-        self.model.channel_configs[channel]['current_source'] = current_source
-
-    def _update_sensor_type(self, channel):
-        """Update sensor type for a channel."""
-        sensor_type = self.view.config_group.get_sensor_type()
-        self.model.channel_configs[channel]['sensor_type'] = sensor_type
+    # def _validate_alarm_thresholds(self, channel):
+    #     """Validate and update alarm thresholds for a channel."""
+    #     high = self.view.config_group.get_alarm_high()
+    #     low = self.view.config_group.get_alarm_low()
+    #
+    #     if high < low:
+    #         self.view.config_group.alarm_high_spin.setValue(low)
+    #         high = low
+    #
+    #     self.model.channel_configs[channel]['alarm_high'] = high
+    #     self.model.channel_configs[channel]['alarm_low'] = low
+    #
+    # def _update_input_range(self, channel):
+    #     """Update input range for a channel."""
+    #     print("Hey")
+    #
+    # def _update_temp_config(self, channel):
+    #     """Update temperature conversion for a channel."""
+    #     enabled = self.view.config_group.get_temp_enabled()
+    #     self.model.channel_configs[channel]['resistive_temp_enabled'] = enabled
+    #     self.model.update_channel_type(channel)
+    #
+    # def _update_current_source(self, channel):
+    #     """Update current source for a channel."""
+    #     current_source = self.view.config_group.get_current_source()
+    #     self.model.channel_configs[channel]['current_source'] = current_source
+    #
+    # def _update_sensor_type(self, channel):
+    #     """Update sensor type for a channel."""
+    #     sensor_type = self.view.config_group.get_sensor_type()
+    #     self.model.channel_configs[channel]['sensor_type'] = sensor_type
 
     def _init_timer(self):
         self.timer = QTimer()
