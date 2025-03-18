@@ -129,6 +129,7 @@ class MainController:
     def handle_clear_data(self):
         """Clear all data from the model and update the plot."""
         self.view.get_graph_canvas().clear_plot()
+        self.model.clear_data()
 
     def handle_load_replay(self, filename):
         success = self.model.load_csv(filename)
@@ -204,16 +205,17 @@ class MainController:
             y_min, y_max = self.view.get_graph_canvas().get_y_axis()
 
             # Update plot with grouped channels
-            self.view.graph_canvas.update_plot(
-                truncated_times,
-                truncated_data,
-                voltage_channels,
-                acceleration_channels,
-                temperature_channels,
-                "Time (s)",
-                y_labels,
-                y_min,
-                y_max
-            )
+            if self.model.get_data():
+                self.view.graph_canvas.update_plot(
+                    truncated_times,
+                    truncated_data,
+                    voltage_channels,
+                    acceleration_channels,
+                    temperature_channels,
+                    "Time (s)",
+                    y_labels,
+                    y_min,
+                    y_max
+                )
         else:
             self.view.get_graph_canvas().clear_plot()

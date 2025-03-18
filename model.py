@@ -176,13 +176,19 @@ class DataModel:
             return False
 
     def get_data(self):
-        return self.live_data
+        if self.live_data is not {channel: [] for channel in range(1, 9)}:
+            return self.live_data
 
     def get_relative_times(self):
         return self.live_relative_times
 
     def get_channel_configs(self):
         return self.channel_configs
+
+    def clear_data(self):
+        self.live_data = {channel: [] for channel in range(1, 9)}
+        self.live_relative_times = []
+        self.start_time = None
 
 
     # def load_csv(self, filename):
