@@ -124,7 +124,9 @@ class GraphCanvas(FigureCanvas):
 
 class ChannelConfigGroup(QGroupBox):
     config_changed = pyqtSignal(str)  # Emits channel name when config changes
-    alarms_changed = pyqtSignal(str)
+    alarms_changed = pyqtSignal(int)
+    input_range_changed = pyqtSignal(int)
+
 
     def __init__(self):
         super().__init__("Channel Configuration")
@@ -194,7 +196,7 @@ class ChannelConfigGroup(QGroupBox):
             self.config_changed.emit(channel)
 
     def _emit_alarms_changed(self):
-        channel = self.get_selected_channel()
+        channel = int(self.get_selected_channel())
         if channel:
             self.alarms_changed.emit(channel)
 

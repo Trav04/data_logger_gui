@@ -51,8 +51,8 @@ class MainController:
             self.view.config_group.alarm_high_spin.setValue(low)
             high = low
 
-        self.model.get_channel_configs()[int(channel)][ALARM_HIGH] = high
-        self.model.get_channel_configs()[int(channel)][ALARM_LOW] = low
+        self.model.get_channel_configs()[channel][ALARM_HIGH] = high
+        self.model.get_channel_configs()[channel][ALARM_LOW] = low
         print(self.model.get_channel_configs())
 
     def _handle_config_changed(self, channel):
