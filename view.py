@@ -244,7 +244,6 @@ class MainWindowView(QMainWindow):
     sync_rtc = pyqtSignal()
     toggle_recording = pyqtSignal(bool)
     clear_data = pyqtSignal()
-    toggle_pc_recording = pyqtSignal(bool)
 
     def __init__(self):
         super().__init__()
@@ -255,6 +254,8 @@ class MainWindowView(QMainWindow):
         self._ymax = 10
 
         self._init_ui()
+
+        self._is_recording = False
 
 
     def _init_ui(self):
@@ -456,3 +457,14 @@ class MainWindowView(QMainWindow):
 
     def clear_graph(self):
         self.graph_canvas.clear_plot()
+
+    def toggle_recording_status(self):
+        self._is_recording = not self._is_recording
+        if self._is_recording:
+            self.recording_status.setText("Recording")
+            self.recording_status.setStyleSheet("color: green;")
+            self.toggle_recording_btn.setText("Stop Recording")
+        else:
+            self.recording_status.setText("Not Recording")
+            self.recording_status.setStyleSheet("color: red;")
+            self.toggle_recording_btn.setText("Start Recording")

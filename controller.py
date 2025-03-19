@@ -13,15 +13,34 @@ from model import CHANNEL_TYPE_MAP
 from model import ALARM_HIGH
 from model import ALARM_LOW
 
+FAKE_DATA = [
+    ("2025-03-08_12-30-15.123", [3.45, 2.78, 25.6, 4.12, 0.12, -0.05, 0.08, 26]),
+    ("2025-03-08_12-30-16.456", [3.46, 2.79, 25.7, 4.11, 0.14, -0.07, 0.09, 26.1]),
+    ("2025-03-08_12-30-17.789", [3.44, 2.77, 25.5, 4.1, 0.11, -0.04, 0.07, 25.9]),
+    ("2025-03-08_12-30-19.012", [3.47, 2.8, 25.8, 4.13, 0.15, -0.06, 0.1, 26.2]),
+    ("2025-03-08_12-30-20.345", [3.43, 2.76, 25.4, 4.09, 0.1, -0.03, 0.06, 25.8]),
+    ("2025-03-08_12-30-21.678", [3.48, 2.81, 25.9, 4.14, 0.16, -0.08, 0.12, 26.3]),
+    ("2025-03-08_12-30-23.001", [3.42, 2.75, 25.3, 4.08, 0.09, -0.02, 0.05, 25.7]),
+    ("2025-03-08_12-30-24.334", [3.49, 2.82, 26.0, 4.15, 0.17, -0.09, 0.13, 26.4]),
+    ("2025-03-08_12-30-25.667", [3.41, 2.74, 25.2, 4.07, 0.08, -0.01, 0.04, 25.6]),
+    ("2025-03-08_12-30-27.000", [3.5, 2.83, 26.1, 4.16, 0.18, -0.1, 0.14, 26.5]),
+    ("2025-03-08_12-30-28.333", [3.4, 2.73, 25.1, 4.06, 0.07, 0.0, 0.03, 25.5])
+]
+
 class MainController:
     def __init__(self, model, view):
         self.model = model
         self.view = view
         self.current_max_points = 1000  # Track max points in controller (User input)
 
+
         self._connect_signals()
         self._init_timer()
         self._init_channel_configs()  # Add initialised channels to the drop down menu
+
+        # # Only if fake data used #
+        # self._fake_data_index = 0
+        # self._init_fake_data()
 
     def _init_channel_configs(self):
         channel_configs = self.model.get_channel_configs()
@@ -35,6 +54,9 @@ class MainController:
         self.view.axis_range_changed.connect(self.handle_axis_range_changed)
         self.view.clear_data.connect(self.handle_clear_data)
         self.view.graph_canvas.hover_signal.connect(self.handle_hover)
+
+        # Device status panel
+        self.view.toggle_recording.connect(self._handle_toggle_recording)
 
         # Channel config connects
         self.view.config_group.config_changed.connect(self._handle_config_changed)
@@ -53,13 +75,19 @@ class MainController:
 
         self.model.get_channel_configs()[channel][ALARM_HIGH] = high
         self.model.get_channel_configs()[channel][ALARM_LOW] = low
-        print(self.model.get_channel_configs())
 
     def _handle_config_changed(self, channel):
         # Check that the alarm thresholds are valid
         self._validate_alarm_thresholds(channel)
 
         print("Hello world: ", channel)
+
+    def _handle_toggle_recording(self):
+        """Toggle recording state and update the view."""
+        self.view.toggle_recording_status()
+        # Only if fake data used #
+        self._fake_data_index = 0
+        self._init_fake_data()
 
     # def _update_input_range(self, channel):
     #     """Update input range for a channel."""
@@ -81,10 +109,30 @@ class MainController:
     #     sensor_type = self.view.config_group.get_sensor_type()
     #     self.model.channel_configs[channel]['sensor_type'] = sensor_type
 
+    def _init_fake_data(self):
+        """Start a timer that simulates incoming data every 500ms."""
+        self.fake_data_timer = QTimer()
+        self.fake_data_timer.timeout.connect(self._add_fake_data)
+        self.fake_data_timer.start(500)  # 500ms interval
+
+    def _add_fake_data(self):
+        """Injects fake sample data into the model at a fixed interval."""
+        if self._fake_data_index < len(FAKE_DATA):
+            timestamp, data = FAKE_DATA[self._fake_data_index]
+            self.add_data(timestamp, data)
+            self._fake_data_index += 1
+        else:
+            self.fake_data_timer.stop()
+
+    def add_data(self, timestamp, data):
+        """Add data to the model and update the plot."""
+        self.model.store_live_data(timestamp, data)
+        self.update_plot()
+
     def _init_timer(self):
         self.timer = QTimer()
         self.timer.timeout.connect(self.update_plot)
-        self.timer.start(2000)
+        self.timer.start(500)
 
     def handle_max_points_changed(self, max_points):
         """Update max points and refresh plot."""
