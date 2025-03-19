@@ -17,7 +17,6 @@ def main():
     # Create the MVC components
     model = DataModel()
     view = MainWindowView()
-    controller = MainController(model, view)
     model.initialize_channel_config(1, CHANNEL_TYPE_VOLTAGE)
     model.initialize_channel_config(2, CHANNEL_TYPE_VOLTAGE)
     model.initialize_channel_config(3, CHANNEL_TYPE_VOLTAGE)
@@ -26,6 +25,9 @@ def main():
     model.initialize_channel_config(6, CHANNEL_TYPE_ACCELERATION)
     model.initialize_channel_config(7, CHANNEL_TYPE_ACCELERATION)
     model.initialize_channel_config(8, CHANNEL_TYPE_TEMPERATURE)
+
+    controller = MainController(model, view)
+
 
     # pprint(model.channel_configs)
     # Show the main window

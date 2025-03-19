@@ -190,34 +190,7 @@ class ChannelConfigGroup(QGroupBox):
         """Emit signal with the currently selected channel."""
         channel = self.get_selected_channel()
         if channel:
-            self.config_changed.emit(channel)
-
-    def update_ui_from_config(self, config):
-        """Update UI elements from a configuration dictionary."""
-        # Block signals temporarily to prevent feedback loops
-        self.alarm_high_spin.blockSignals(True)
-        self.alarm_low_spin.blockSignals(True)
-        self.input_range_combo.blockSignals(True)
-        self.temp_enable_check.blockSignals(True)
-        self.current_source_combo.blockSignals(True)
-        self.sensor_type_combo.blockSignals(True)
-
-        try:
-            # Update values
-            self.alarm_high_spin.setValue(config['alarm_high'])
-            self.alarm_low_spin.setValue(config['alarm_low'])
-            self.input_range_combo.setCurrentText(config['input_range'])
-            self.temp_enable_check.setChecked(config['resistive_temp_enabled'])
-            self.current_source_combo.setCurrentText(config['current_source'])
-            self.sensor_type_combo.setCurrentText(config['sensor_type'])
-        finally:
-            # Always unblock signals even if errors occur
-            self.alarm_high_spin.blockSignals(False)
-            self.alarm_low_spin.blockSignals(False)
-            self.input_range_combo.blockSignals(False)
-            self.temp_enable_check.blockSignals(False)
-            self.current_source_combo.blockSignals(False)
-            self.sensor_type_combo.blockSignals(False)
+            self.config_changed.emit("1")
 
     def get_selected_channel(self) -> str:
         """Get the currently selected channel name."""
@@ -246,6 +219,10 @@ class ChannelConfigGroup(QGroupBox):
     def get_sensor_type(self) -> str:
         """Get the selected sensor type."""
         return self.sensor_type_combo.currentText()
+
+    def set_channel_drop_down_item(self, channel):
+        """ Add a single string to the ch drop down list """
+        self.channel_combo.addItem(channel)
 
 class MainWindowView(QMainWindow):
     load_replay = pyqtSignal(str)
@@ -459,8 +436,11 @@ class MainWindowView(QMainWindow):
     def get_y_axis(self):
         return self._ymin, self._ymax
 
-    def get_graph_canvas(self):
+    def edit_graph_canvas_view(self):
         return self.graph_canvas
+
+    def edit_channel_config_view(self):
+        return self.config_group
 
     def clear_graph(self):
         self.graph_canvas.clear_plot()

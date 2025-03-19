@@ -18,56 +18,41 @@ class MainController:
 
         self._connect_signals()
         self._init_timer()
+        self._init_channel_configs()  # Add initialised channels to the drop down menu
+
+    def _init_channel_configs(self):
+        channel_configs = self.model.get_channel_configs()
+        for channel in channel_configs.keys():
+            self.view.edit_channel_config_view().set_channel_drop_down_item(str(channel))
 
     def _connect_signals(self):
         self.view.load_replay.connect(self.handle_load_replay)
         self.view.max_points.connect(self.handle_max_points_changed)
         self.view.channel_visibility_change.connect(self.handle_visibility_changed)
         self.view.axis_range_changed.connect(self.handle_axis_range_changed)
-        # self.view.sync_rtc.connect(self.handle_sync_rtc)
-        # self.view.toggle_recording.connect(self.handle_recording)
         self.view.clear_data.connect(self.handle_clear_data)
         self.view.graph_canvas.hover_signal.connect(self.handle_hover)
 
         # Channel config connects
-        # self.view.config_group.config_changed.connect(self.handle_config_changed)
+        self.view.config_group.config_changed.connect(self._handle_config_changed)
 
     ## TODO Update the channel config in the model, update the entire structure for that channel each time a param changes
 
-    def _update_config_ui(self, channel):
-        """Update UI with current channel configuration"""
-        if not channel:
-            return
+    def _validate_alarm_thresholds(self, channel):
+        """Validate and update alarm thresholds for a channel."""
+        high = self.view.config_group.get_alarm_high()
+        low = self.view.config_group.get_alarm_low()
 
-        self.model.initialize_channel_config(channel)
-        config = self.model.channel_configs[channel]
+        if high < low:
+            self.view.config_group.alarm_high_spin.setValue(low)
+            high = low
 
-        # Update UI elements
-        self.view.config_group.alarm_high_spin.setValue(config['alarm_high'])
-        self.view.config_group.alarm_low_spin.setValue(config['alarm_low'])
-        self.view.config_group.input_range_combo.setCurrentText(config['input_range'])
-        self.view.config_group.alarm_type_combo.setCurrentText(config['alarm_type'])
-        self.view.config_group.alarm_state_led.set_status(config['alarm_state'])
+        self.model.channel_configs[channel]['alarm_high'] = high
+        self.model.channel_configs[channel]['alarm_low'] = low
 
-        # Temperature config
-        is_voltage = self.model.channel_info[channel]['type'] == 'Voltage'
-        self.view.config_group.temp_enable_check.setVisible(is_voltage)
-        self.view.config_group.temp_enable_check.setChecked(config['temp_enabled'])
-        self.view.config_group.current_source_combo.setCurrentText(config['current_source'])
-        self.view.config_group.sensor_type_combo.setCurrentText(config['sensor_type'])
+    def _handle_config_changed(self, channel):
+        print("Hello world: ", channel)
 
-    # def _validate_alarm_thresholds(self, channel):
-    #     """Validate and update alarm thresholds for a channel."""
-    #     high = self.view.config_group.get_alarm_high()
-    #     low = self.view.config_group.get_alarm_low()
-    #
-    #     if high < low:
-    #         self.view.config_group.alarm_high_spin.setValue(low)
-    #         high = low
-    #
-    #     self.model.channel_configs[channel]['alarm_high'] = high
-    #     self.model.channel_configs[channel]['alarm_low'] = low
-    #
     # def _update_input_range(self, channel):
     #     """Update input range for a channel."""
     #     print("Hey")
@@ -100,11 +85,11 @@ class MainController:
 
     def handle_axis_range_changed(self, y_min, y_max):
         """Update the Y-axis range of the plot."""
-        self.view.get_graph_canvas().set_y_lim(y_min, y_max)
+        self.view.edit_graph_canvas_view().set_y_lim(y_min, y_max)
 
     def handle_clear_data(self):
         """Clear all data from the model and update the plot."""
-        self.view.get_graph_canvas().clear_plot()
+        self.view.edit_graph_canvas_view().clear_plot()
         self.model.clear_data()
 
     def handle_load_replay(self, filename):
@@ -182,7 +167,7 @@ class MainController:
                     temperature_channels.append(ch)
 
             # Get Y-axis range from view
-            y_min, y_max = self.view.get_graph_canvas().get_y_axis()
+            y_min, y_max = self.view.edit_graph_canvas_view().get_y_axis()
 
             # Update plot with grouped channels
             if self.model.get_data():
@@ -198,4 +183,4 @@ class MainController:
                     y_max
                 )
         else:
-            self.view.get_graph_canvas().clear_plot()
+            self.view.edit_graph_canvas_view().clear_plot()
