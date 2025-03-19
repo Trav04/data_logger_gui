@@ -126,6 +126,10 @@ class ChannelConfigGroup(QGroupBox):
     config_changed = pyqtSignal(str)  # Emits channel name when config changes
     alarms_changed = pyqtSignal(int)
     input_range_changed = pyqtSignal(int)
+    alarm_type_changed = pyqtSignal(int)
+    resistive_temp_mode_changed = pyqtSignal(int)
+    current_source_changed = pyqtSignal(int)
+    sensor_type_changed = pyqtSignal(int)
 
 
     def __init__(self):
