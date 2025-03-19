@@ -10,6 +10,9 @@ from model import CHANNEL_TYPE_RESISTIVE_TEMPERATURE
 from model import CHANNEL_TYPE
 from model import CHANNEL_TYPE_MAP
 
+from model import ALARM_HIGH
+from model import ALARM_LOW
+
 class MainController:
     def __init__(self, model, view):
         self.model = model
@@ -35,10 +38,11 @@ class MainController:
 
         # Channel config connects
         self.view.config_group.config_changed.connect(self._handle_config_changed)
+        self.view.config_group.alarms_changed.connect(self._handle_alarms_changed)
 
     ## TODO Update the channel config in the model, update the entire structure for that channel each time a param changes
 
-    def _validate_alarm_thresholds(self, channel):
+    def _handle_alarms_changed(self, channel):
         """Validate and update alarm thresholds for a channel."""
         high = self.view.config_group.get_alarm_high()
         low = self.view.config_group.get_alarm_low()
@@ -47,10 +51,14 @@ class MainController:
             self.view.config_group.alarm_high_spin.setValue(low)
             high = low
 
-        self.model.channel_configs[channel]['alarm_high'] = high
-        self.model.channel_configs[channel]['alarm_low'] = low
+        self.model.get_channel_configs()[int(channel)][ALARM_HIGH] = high
+        self.model.get_channel_configs()[int(channel)][ALARM_LOW] = low
+        print(self.model.get_channel_configs())
 
     def _handle_config_changed(self, channel):
+        # Check that the alarm thresholds are valid
+        self._validate_alarm_thresholds(channel)
+
         print("Hello world: ", channel)
 
     # def _update_input_range(self, channel):

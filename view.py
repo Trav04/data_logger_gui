@@ -124,6 +124,7 @@ class GraphCanvas(FigureCanvas):
 
 class ChannelConfigGroup(QGroupBox):
     config_changed = pyqtSignal(str)  # Emits channel name when config changes
+    alarms_changed = pyqtSignal(str)
 
     def __init__(self):
         super().__init__("Channel Configuration")
@@ -179,8 +180,8 @@ class ChannelConfigGroup(QGroupBox):
 
     def _connect_internal_signals(self):
         """Connect all UI changes to emit config_changed."""
-        self.alarm_high_spin.valueChanged.connect(self._emit_config_changed)
-        self.alarm_low_spin.valueChanged.connect(self._emit_config_changed)
+        self.alarm_high_spin.valueChanged.connect(self._emit_alarms_changed)
+        self.alarm_low_spin.valueChanged.connect(self._emit_alarms_changed)
         self.input_range_combo.currentTextChanged.connect(self._emit_config_changed)
         self.temp_enable_check.toggled.connect(self._emit_config_changed)
         self.current_source_combo.currentTextChanged.connect(self._emit_config_changed)
@@ -190,7 +191,12 @@ class ChannelConfigGroup(QGroupBox):
         """Emit signal with the currently selected channel."""
         channel = self.get_selected_channel()
         if channel:
-            self.config_changed.emit("1")
+            self.config_changed.emit(channel)
+
+    def _emit_alarms_changed(self):
+        channel = self.get_selected_channel()
+        if channel:
+            self.alarms_changed.emit(channel)
 
     def get_selected_channel(self) -> str:
         """Get the currently selected channel name."""

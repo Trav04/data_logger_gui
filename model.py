@@ -42,8 +42,8 @@ TEMP_SENSOR_RTD = "Platinum RTD"
 
 ## Channel CONFIG defines
 CHANNEL_TYPE = 'channel_type'
-ALARM_HIGH = "alarm_high"
-ALARM_LOW = "alarm_low"
+ALARM_HIGH = 'alarm_high'
+ALARM_LOW = 'alarm_low'
 INPUT_RANGE = 'input_range'
 ALARM_STATE = 'alarm_state'
 TEMP_ENABLED = 'temp_enabled'
