@@ -80,7 +80,9 @@ class SerialManager:
 
     def heartbeat_timer(self):
         self.send_heartbeat()
-        threading.Timer(0.5, self.heartbeat_timer).start()
+        heartbeat = threading.Timer(0.5, self.heartbeat_timer)
+        heartbeat.daemon = True  # Set as daemon thread (exit when main thread exits)
+        heartbeat.start()
 
     def start_heartbeat(self):
         self.heartbeat_timer()
