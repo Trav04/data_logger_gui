@@ -1,12 +1,12 @@
 import sys
 import time
 
+
 from PyQt5.QtWidgets import QApplication
 from model import DataModel
-from serial_comms import SerialManager
+from serial_communication import SerialManager
 from view import MainWindowView
 from controller import MainController
-from serial_comms import SerialManager
 
 from model import CHANNEL_TYPE_VOLTAGE
 from model import CHANNEL_TYPE_TEMPERATURE
@@ -31,8 +31,11 @@ def main():
 
     controller = MainController(model, view)
     serial = SerialManager()
-    view.show()
 
+    ## Initiate PC communication signal thread
+    serial.start_heartbeat()
+    view.show()
+    ## TODO Kill threads when I close the pc software
     sys.exit(app.exec_())
 
 if __name__ == "__main__":

@@ -35,6 +35,7 @@ def send_struct(ser, struct_type, *data):
         print(f"Error packing data for struct type {struct_type}: {e}")
         return False
 
+
 # def receive_struct(ser, struct_type):
 #     fmt = STRUCT_FORMATS[struct_type]
 #     size = struct_size(fmt)
@@ -78,7 +79,7 @@ def send_heartbeat(ser):
 
 def heartbeat_timer(ser):
     send_heartbeat(ser)
-    threading.Timer(1, heartbeat_timer, args=[ser]).start()  # Re-call itself every 500ms
+    threading.Timer(0.5, heartbeat_timer, args=[ser]).start()  # Re-call itself every 500ms
 
 
 if __name__ == "__main__":
