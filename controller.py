@@ -2,7 +2,7 @@
 from PyQt5.QtCore import QTimer
 import numpy as np
 
-from model import CHANNEL_TYPE_VOLTAGE
+from model import CHANNEL_TYPE_VOLTAGE, INPUT_RANGE, INPUT_RANGE_10V, INPUT_RANGE_1V
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_ACCELERATION
 from model import CHANNEL_TYPE_RESISTIVE_TEMPERATURE
@@ -33,14 +33,10 @@ class MainController:
         self.view = view
         self.current_max_points = 1000  # Track max points in controller (User input)
 
-
         self._connect_signals()
         self._init_timer()
         self._init_channel_configs()  # Add initialised channels to the drop down menu
 
-        # # Only if fake data used #
-        # self._fake_data_index = 0
-        # self._init_fake_data()
 
     def _init_channel_configs(self):
         channel_configs = self.model.get_channel_configs()
@@ -59,10 +55,20 @@ class MainController:
         self.view.toggle_recording.connect(self._handle_toggle_recording)
 
         # Channel config connects
-        self.view.config_group.config_changed.connect(self._handle_config_changed)
         self.view.config_group.alarms_changed.connect(self._handle_alarms_changed)
+        self.view.config_group.input_range_changed.connect(self._handle_input_range_changed)
 
     ## TODO Update the channel config in the model, update the entire structure for that channel each time a param changes
+
+    def _handle_input_range_changed(self, channel):
+        """Update input range for a channel."""
+        input_range = self.view.config_group.get_input_range()
+        trimmed_range = 0
+        if input_range == INPUT_RANGE_10V:
+            trimmed_range = 10
+        elif input_range == INPUT_RANGE_1V:
+            trimmed_range = 1
+        self.model.get_channel_configs()[channel][INPUT_RANGE] = trimmed_range
 
     def _handle_alarms_changed(self, channel):
         """Validate and update alarm thresholds for a channel."""
@@ -75,12 +81,6 @@ class MainController:
 
         self.model.get_channel_configs()[channel][ALARM_HIGH] = high
         self.model.get_channel_configs()[channel][ALARM_LOW] = low
-
-    def _handle_config_changed(self, channel):
-        # Check that the alarm thresholds are valid
-        self._validate_alarm_thresholds(channel)
-
-        print("Hello world: ", channel)
 
     def _handle_toggle_recording(self):
         """Toggle recording state and update the view."""

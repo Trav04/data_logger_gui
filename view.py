@@ -7,7 +7,7 @@ from PyQt5.QtGui import QColor
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-from model import CHANNEL_TYPE_ACCELERATION
+from model import CHANNEL_TYPE_ACCELERATION, INPUT_RANGE_10V, INPUT_RANGE_1V
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_VOLTAGE
 
@@ -139,7 +139,7 @@ class ChannelConfigGroup(QGroupBox):
         self.alarm_low_spin = QSpinBox()
         self.input_range_combo = QComboBox()
         self.alarm_type_combo = QComboBox()
-        self.alarm_state_led = StatusLED()
+        self.alarm_occurring_led = StatusLED()
         self.temp_enable_check = QCheckBox("Enable Temperature")
         self.current_source_combo = QComboBox()
         self.sensor_type_combo = QComboBox()
@@ -160,14 +160,14 @@ class ChannelConfigGroup(QGroupBox):
         layout.addRow(QLabel("Alarm Low:"), self.alarm_low_spin)
 
         # Input Range
-        self.input_range_combo.addItems(['+/-10V', '+/-1V'])
+        self.input_range_combo.addItems([INPUT_RANGE_10V, INPUT_RANGE_1V])
         layout.addRow(QLabel("Input Range:"), self.input_range_combo)
 
         # Alarm State
         self.alarm_type_combo.addItems(['Disabled', 'Latched', 'Live'])
         self.alarm_type_combo.setEnabled(False)
         layout.addRow(QLabel("Alarm Type:"), self.alarm_type_combo)
-        layout.addRow(QLabel("Alarm State (ON / OFF):"), self.alarm_state_led)
+        layout.addRow(QLabel("Alarm Occurring (YES/NO):"), self.alarm_occurring_led)
 
         # Temperature Conversion
         self.temp_enable_check.toggled.connect(self._toggle_temp_config)
@@ -188,7 +188,7 @@ class ChannelConfigGroup(QGroupBox):
         """Connect all UI changes to emit config_changed."""
         self.alarm_high_spin.valueChanged.connect(self._emit_alarms_changed)
         self.alarm_low_spin.valueChanged.connect(self._emit_alarms_changed)
-        self.input_range_combo.currentTextChanged.connect(self._emit_config_changed)
+        self.input_range_combo.currentTextChanged.connect(self._emit_input_range_changed)
         self.temp_enable_check.toggled.connect(self._emit_config_changed)
         self.current_source_combo.currentTextChanged.connect(self._emit_config_changed)
         self.sensor_type_combo.currentTextChanged.connect(self._emit_config_changed)
@@ -203,6 +203,11 @@ class ChannelConfigGroup(QGroupBox):
         channel = int(self.get_selected_channel())
         if channel:
             self.alarms_changed.emit(channel)
+
+    def _emit_input_range_changed(self):
+        channel = int(self.get_selected_channel())
+        if channel:
+            self.input_range_changed.emit(channel)
 
     def get_selected_channel(self) -> str:
         """Get the currently selected channel name."""

@@ -30,12 +30,11 @@ def main():
     model.initialize_channel_config(8, CHANNEL_TYPE_TEMPERATURE)
 
     controller = MainController(model, view)
-    serial = SerialManager()
 
     ## Initiate PC communication signal thread
-    serial.start_heartbeat()
+    # serial = SerialManager()
+    # serial.start_heartbeat()
     view.show()
-    ## TODO Kill threads when I close the pc software
     sys.exit(app.exec_())
 
 if __name__ == "__main__":

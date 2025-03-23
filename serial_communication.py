@@ -11,7 +11,7 @@ class SerialManager:
     OPTIC_CONNECTION = "optic_connection"
     DEVICE_RECORDING_STATE = "device_recording_state"
 
-    HEARTBEAT_BEAT = 0x06
+    HEARTBEAT_BEAT = 0x06  # Heartbeat signal
 
     STRUCT_FORMATS = {
         HEARTBEAT: "B",  # uint8_t beat = 0x00
@@ -27,11 +27,11 @@ class SerialManager:
         self.baudrate = baudrate
         self.ser = None
         self.lock = threading.Lock()
-        self.connect_serial()
-        self.reconnect_thread = threading.Thread(target=self.reconnect_serial, daemon=True)
+        self._connect_serial()
+        self.reconnect_thread = threading.Thread(target=self._reconnect_serial, daemon=True)
         self.reconnect_thread.start()
 
-    def connect_serial(self):
+    def _connect_serial(self):
         """Attempt to connect to the serial port."""
         try:
             self.ser = serial.Serial(self.port, self.baudrate, timeout=1)
@@ -40,16 +40,16 @@ class SerialManager:
             print(f"Failed to connect to {self.port}: {e}")
             self.ser = None
 
-    def reconnect_serial(self):
+    def _reconnect_serial(self):
         """Continuously attempts to reconnect if the serial port is disconnected."""
         while True:
             if self.ser is None or not self.ser.is_open:
-                self.close()
+                self._close()
                 print("Attempting to reconnect...")
-                self.connect_serial()
+                self._connect_serial()
             time.sleep(0.5)  # Retry every 2 seconds
 
-    def send_struct(self, struct_type, *data):
+    def _send_struct(self, struct_type, *data):
         if struct_type not in self.STRUCT_FORMATS:
             print(f"Error: Unknown struct type {struct_type}")
             return False
@@ -64,31 +64,33 @@ class SerialManager:
                     return True
                 else:
                     print("Serial port not available.")
-                    self.close()
+                    self._close()
                     return False
         except struct.error as e:
             print(f"Error packing data for struct type {struct_type}: {e}")
-            self.close()
+            self._close()
             return False
         except serial.SerialException as e:
             print(f"Serial communication error: {e}")
-            self.close()
+            self._close()
             return False
 
-    def send_heartbeat(self):
-        self.send_struct(self.HEARTBEAT, self.HEARTBEAT_BEAT)
+    def _send_heartbeat(self):
+        self._send_struct(self.HEARTBEAT, self.HEARTBEAT_BEAT)
 
-    def heartbeat_timer(self):
-        self.send_heartbeat()
-        heartbeat = threading.Timer(0.5, self.heartbeat_timer)
+    def _heartbeat_timer(self):
+        """ Starts the heart beat thread to periodically send heart beat signals to the device"""
+        self._send_heartbeat()
+        heartbeat = threading.Timer(0.5, self._heartbeat_timer)
         heartbeat.daemon = True  # Set as daemon thread (exit when main thread exits)
         heartbeat.start()
 
-    def start_heartbeat(self):
-        self.heartbeat_timer()
-
-    def close(self):
+    def _close(self):
         """Close the serial connection safely."""
         if self.ser and self.ser.is_open:
             self.ser.close()
             print("Serial connection closed.")
+
+    def start_heartbeat(self):
+        """ Starts the heartbeat """
+        self._heartbeat_timer()
