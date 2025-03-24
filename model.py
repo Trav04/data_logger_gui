@@ -73,7 +73,7 @@ class DataModel:
                 ALARM_LOW: 0,
                 INPUT_RANGE: INPUT_RANGE_10V,  # Default to +/-10V
                 ALARM_TYPE: ALARM_TYPE_DISABLED,  # Default to disabled
-                ALARM_OCCURRING: False,  # Default OFF
+                ALARM_OCCURRING: True,  # Default OFF
                 TEMP_ENABLED: False,  # Default not resistive temperature mode
                 CURRENT_SOURCE: CURRENT_SOURCE_10UA if channel_type == CHANNEL_TYPE_RESISTIVE_TEMPERATURE else None,
                 SENSOR_TYPE: TEMP_SENSOR_THERMISTOR if channel_type == CHANNEL_TYPE_RESISTIVE_TEMPERATURE else None

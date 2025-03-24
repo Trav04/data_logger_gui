@@ -124,7 +124,8 @@ class GraphCanvas(FigureCanvas):
 
 
 class ChannelConfigGroup(QGroupBox):
-    config_changed = pyqtSignal(str)  # Emits channel name when config changes
+    # config_changed = pyqtSignal(str)  # Emits channel name when config changes
+    selected_channel_changed = pyqtSignal(int)
     alarms_changed = pyqtSignal(int)
     input_range_changed = pyqtSignal(int)
     alarm_type_changed = pyqtSignal(int)
@@ -186,6 +187,7 @@ class ChannelConfigGroup(QGroupBox):
 
     def _connect_internal_signals(self):
         """Connect all UI changes to emit config_changed."""
+        self.channel_combo.currentTextChanged.connect(self._emit_selected_channel_changed)
         self.alarm_high_spin.valueChanged.connect(self._emit_alarms_changed)
         self.alarm_low_spin.valueChanged.connect(self._emit_alarms_changed)
         self.input_range_combo.currentTextChanged.connect(self._emit_input_range_changed)
@@ -208,6 +210,11 @@ class ChannelConfigGroup(QGroupBox):
         channel = int(self.get_selected_channel())
         if channel:
             self.input_range_changed.emit(channel)
+
+    def _emit_selected_channel_changed(self):
+        channel = int(self.get_selected_channel())
+        if channel:
+            self.selected_channel_changed.emit(channel)
 
     def get_selected_channel(self) -> str:
         """Get the currently selected channel name."""
@@ -245,9 +252,8 @@ class ChannelConfigGroup(QGroupBox):
         """ Add a single string to the ch drop down list """
         self.channel_combo.addItem(channel)
 
-    def set_alarm_occurring(self, channel: str, status: bool):
-        if self.get_selected_channel() == channel:
-            self.alarm_occurring_led.set_status(status)
+    def set_alarm_occurring(self, status: bool):
+        self.alarm_occurring_led.set_status(status)
 
 class MainWindowView(QMainWindow):
     load_replay = pyqtSignal(str)

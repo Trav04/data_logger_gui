@@ -2,7 +2,7 @@
 from PyQt5.QtCore import QTimer
 import numpy as np
 
-from model import CHANNEL_TYPE_VOLTAGE, INPUT_RANGE, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE
+from model import CHANNEL_TYPE_VOLTAGE, INPUT_RANGE, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE, ALARM_OCCURRING
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_ACCELERATION
 from model import CHANNEL_TYPE_RESISTIVE_TEMPERATURE
@@ -54,11 +54,18 @@ class MainController:
         self.view.toggle_recording.connect(self._handle_toggle_recording)
 
         # Channel config connects
+        self.view.config_group.selected_channel_changed.connect(self._handle_channel_changed)
         self.view.config_group.alarms_changed.connect(self._handle_alarms_changed)
         self.view.config_group.input_range_changed.connect(self._handle_input_range_changed)
         self.view.config_group.alarm_type_changed.connect(self._handle_alarm_type_changed)
 
     ## TODO Update the channel config in the model, update the entire structure for that channel each time a param changes
+    def _handle_channel_changed(self, channel: int):
+        """Update channel type and update the model."""
+        # Get the current alarm status for the channel
+        status = self.model.get_channel_configs()[channel][ALARM_OCCURRING]
+        # Set the corresponding alarm state for this channel
+        self.view.config_group.set_alarm_occurring(status)
 
     def _handle_alarm_type_changed(self, channel):
         """Update alarm type for a channel."""
