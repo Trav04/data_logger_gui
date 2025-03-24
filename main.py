@@ -32,8 +32,8 @@ def main():
     controller = MainController(model, view)
 
     ## Initiate PC communication signal thread
-    # serial = SerialManager()
-    # serial.start_heartbeat()
+    serial = SerialManager()
+    serial.start_heartbeat()
     view.show()
     sys.exit(app.exec_())
 

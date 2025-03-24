@@ -143,12 +143,16 @@ class MainController:
         self.model.clear_data()
 
     def _handle_load_replay(self, filename):
+        print("Hey")
         success = self.model.load_csv(filename)
         if success:
             self.view.status_bar.showMessage(f"Loaded: {filename}", 5000)
             # Populate channel dropdown
+            self.view.config_group.channel_combo.blockSignals(True)
             self.view.config_group.channel_combo.clear()
             self.view.config_group.channel_combo.addItems(self.model.replay_data.keys())
+            self.view.config_group.channel_combo.blockSignals(False)
+
         else:
             self.view.status_bar.showMessage("Invalid file format", 5000)
         self.update_plot()

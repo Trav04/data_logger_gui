@@ -1,4 +1,6 @@
 # view.py
+import time
+
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QFileDialog, QLabel, QSpinBox, QComboBox, QFormLayout, QGroupBox, QScrollArea,
                              QCheckBox, QDoubleSpinBox, QFrame)
@@ -436,6 +438,10 @@ class MainWindowView(QMainWindow):
         self.rtc_status.setStyleSheet("color: red;")
         rtc_layout.addWidget(self.rtc_status)
 
+        # System Time Display
+        self.system_time_label = QLabel(time.strftime('%H:%M:%S'))
+        rtc_layout.addWidget(self.system_time_label)
+
         sync_rtc_btn = QPushButton("Sync RTC")
         sync_rtc_btn.clicked.connect(self.sync_rtc.emit)
         rtc_layout.addWidget(sync_rtc_btn)
@@ -487,3 +493,10 @@ class MainWindowView(QMainWindow):
             self.recording_status.setText("Not Recording")
             self.recording_status.setStyleSheet("color: red;")
             self.toggle_recording_btn.setText("Start Recording")
+
+    def set_rtc_time(self):
+        self.rtc_status.setText("Synced")
+        self.rtc_status.setStyleSheet("color: green;")
+
+    # def update_rtc_time(self):
+    #

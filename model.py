@@ -184,6 +184,7 @@ class DataModel:
 
     def get_channel_configs(self):
         return self.channel_configs
+        print(self.channel_configs)
 
     def clear_data(self):
         self.live_data = {channel: [] for channel in range(1, 9)}
