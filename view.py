@@ -245,6 +245,10 @@ class ChannelConfigGroup(QGroupBox):
         """ Add a single string to the ch drop down list """
         self.channel_combo.addItem(channel)
 
+    def set_alarm_occurring(self, channel: str, status: bool):
+        if self.get_selected_channel() == channel:
+            self.alarm_occurring_led.set_status(status)
+
 class MainWindowView(QMainWindow):
     load_replay = pyqtSignal(str)
     max_points = pyqtSignal(int)

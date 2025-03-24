@@ -37,19 +37,18 @@ class MainController:
         self._init_timer()
         self._init_channel_configs()  # Add initialised channels to the drop down menu
 
-
     def _init_channel_configs(self):
         channel_configs = self.model.get_channel_configs()
         for channel in channel_configs.keys():
             self.view.edit_channel_config_view().set_channel_drop_down_item(str(channel))
 
     def _connect_signals(self):
-        self.view.load_replay.connect(self.handle_load_replay)
+        self.view.load_replay.connect(self._handle_load_replay)
         self.view.max_points.connect(self.handle_max_points_changed)
-        self.view.channel_visibility_change.connect(self.handle_visibility_changed)
+        self.view.channel_visibility_change.connect(self._handle_visibility_changed)
         self.view.axis_range_changed.connect(self.handle_axis_range_changed)
-        self.view.clear_data.connect(self.handle_clear_data)
-        self.view.graph_canvas.hover_signal.connect(self.handle_hover)
+        self.view.clear_data.connect(self._handle_clear_data)
+        self.view.graph_canvas.hover_signal.connect(self._handle_hover)
 
         # Device status panel
         self.view.toggle_recording.connect(self._handle_toggle_recording)
@@ -97,26 +96,6 @@ class MainController:
         self._fake_data_index = 0
         self._init_fake_data()
 
-    # def _update_input_range(self, channel):
-    #     """Update input range for a channel."""
-    #     print("Hey")
-    #
-    # def _update_temp_config(self, channel):
-    #     """Update temperature conversion for a channel."""
-    #     enabled = self.view.config_group.get_temp_enabled()
-    #     self.model.channel_configs[channel]['resistive_temp_enabled'] = enabled
-    #     self.model.update_channel_type(channel)
-    #
-    # def _update_current_source(self, channel):
-    #     """Update current source for a channel."""
-    #     current_source = self.view.config_group.get_current_source()
-    #     self.model.channel_configs[channel]['current_source'] = current_source
-    #
-    # def _update_sensor_type(self, channel):
-    #     """Update sensor type for a channel."""
-    #     sensor_type = self.view.config_group.get_sensor_type()
-    #     self.model.channel_configs[channel]['sensor_type'] = sensor_type
-
     def _init_fake_data(self):
         """Start a timer that simulates incoming data every 500ms."""
         self.fake_data_timer = QTimer()
@@ -151,12 +130,12 @@ class MainController:
         """Update the Y-axis range of the plot."""
         self.view.edit_graph_canvas_view().set_y_lim(y_min, y_max)
 
-    def handle_clear_data(self):
+    def _handle_clear_data(self):
         """Clear all data from the model and update the plot."""
         self.view.edit_graph_canvas_view().clear_plot()
         self.model.clear_data()
 
-    def handle_load_replay(self, filename):
+    def _handle_load_replay(self, filename):
         success = self.model.load_csv(filename)
         if success:
             self.view.status_bar.showMessage(f"Loaded: {filename}", 5000)
@@ -167,10 +146,10 @@ class MainController:
             self.view.status_bar.showMessage("Invalid file format", 5000)
         self.update_plot()
 
-    def handle_visibility_changed(self):
+    def _handle_visibility_changed(self):
         self.update_plot()
 
-    def handle_hover(self, x, global_x, global_y):
+    def _handle_hover(self, x, global_x, global_y):
         """Handle hover events on the plot canvas, showing tooltips for selected channels."""
         if x is None:
             self.view.tooltip_label.hide()
@@ -196,6 +175,10 @@ class MainController:
         self.view.tooltip_label.adjustSize()
         self.view.tooltip_label.move(global_x + 15, global_y + 15)
         self.view.tooltip_label.show()
+
+    def update_channel_config(self, channel, config):
+        """Update channel config in the model and update the plot."""
+        ## TODO To be implemented. Serial comms will send a channel map, the model should be updated here
 
     def update_plot(self):
         """Update plots with truncated data based on current_max_points."""
