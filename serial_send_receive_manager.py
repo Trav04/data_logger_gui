@@ -34,14 +34,20 @@ class SerialSendReceiveManager(SerialManager):
 
     #### SENDING DATA ####
 
-    def _send_struct(self, struct_type, *data):
-        if struct_type not in self.STRUCT_FORMATS:
-            print(f"Error: Unknown struct type {struct_type}")
+    def _send_struct(self, struct_id, *args):
+        """
+        Send struct over serial with no acknowledgement wait
+        :param struct_id: the id of the struct being sent
+        :param args: the number of arguments sent in that struct
+        :return: True if the args are sent, false otherwise
+        """
+        if struct_id not in self.STRUCT_FORMATS:
+            print(f"Error: Unknown struct type {struct_id}")
             return False
 
-        fmt = self.STRUCT_FORMATS[struct_type]
+        fmt = self.STRUCT_FORMATS[struct_id]
         try:
-            packed_data = struct.pack(fmt, *data)
+            packed_data = struct.pack(fmt, *args)
             with self.lock:
                 if self._ser and self._ser.is_open:
                     self._ser.write(packed_data)
@@ -52,7 +58,58 @@ class SerialSendReceiveManager(SerialManager):
                     self._close()
                     return False
         except struct.error as e:
-            print(f"Error packing data for struct type {struct_type}: {e}")
+            print(f"Error packing data for struct type {struct_id}: {e}")
+            self._close()
+            return False
+        except serial.SerialException as e:
+            print(f"Serial communication error: {e}")
+            self._close()
+            return False
+
+    def _send_struct_ack_wait(self, struct_id, *args, ack_timeout=2.0) -> bool:
+        """
+        Send a struct and await an acknowledgement back
+        :param struct_id: the ID of the struct to be sent
+        :param args: the parameters of that struct to be sent
+        :param ack_timeout: (optional) the duration that should be waited for the ack packet
+        :return: True if struct sent and ack received, false otherwise
+        """
+        if struct_id not in self.STRUCT_FORMATS:
+            print(f"Error: Unknown struct type {struct_id}")
+            return False
+
+        fmt = self.STRUCT_FORMATS[struct_id]
+
+        try:
+            packed_data = struct.pack(fmt, *args)
+            ack_expected = f";A{struct_id}".encode()  # Expected ACK response
+
+            with self.lock:
+                if self._ser and self._ser.is_open:
+                    # Send the packed struct data
+                    self._ser.write(packed_data)
+                    self._ser.flush()
+
+                    # Wait for ACK response
+                    start_time = time.time()
+                    ack_received = b""
+
+                    while time.time() - start_time < ack_timeout:
+                        ack_received += self._ser.read(1)  # Read one byte at a time
+
+                        # Check if ACK string is in received data
+                        if ack_expected in ack_received:
+                            return True
+                    
+                    print(f"ACK Timeout: Expected {ack_expected}, but got {ack_received}")
+                    return False
+                else:
+                    print("Serial port not available.")
+                    self._close()
+                    return False
+
+        except struct.error as e:
+            print(f"Error packing data for struct type {struct_id}: {e}")
             self._close()
             return False
         except serial.SerialException as e:
