@@ -4,7 +4,8 @@ import time
 
 from PyQt5.QtWidgets import QApplication
 from model import DataModel
-from serial_communication import SerialManager
+from serial_manager import SerialManager
+from serial_send_receive_manager import SerialSendReceiveManager
 from view import MainWindowView
 from controller import MainController
 
@@ -32,8 +33,9 @@ def main():
     controller = MainController(model, view)
 
     ## Initiate PC communication signal thread
-    serial = SerialManager()
+    serial = SerialSendReceiveManager()
     serial.start_heartbeat()
+
     view.show()
     sys.exit(app.exec_())
 
