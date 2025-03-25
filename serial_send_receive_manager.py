@@ -15,6 +15,8 @@ class SerialSendReceiveManager(SerialManager):
     OPTIC_CONNECTION = "optic_connection"
     DEVICE_RECORDING_STATE = "device_recording_state"
 
+    ACKNOWLEDGEMENT_PREFIX = ";A"
+
     HEARTBEAT_BEAT = 0x06  # Heartbeat signal
 
     STRUCT_FORMATS = {
@@ -25,7 +27,6 @@ class SerialSendReceiveManager(SerialManager):
         OPTIC_CONNECTION: "B B",  # struct_id (uint8), recording_state (uint8)
         DEVICE_RECORDING_STATE: "B B"  # struct_id (uint8), optic_state (uint8)
     }
-
 
     def __init__(self):
         super().__init__()
@@ -59,16 +60,6 @@ class SerialSendReceiveManager(SerialManager):
             self._close()
             return False
 
-    def _send_heartbeat(self):
-        self._send_struct(self.HEARTBEAT, self.HEARTBEAT_BEAT)
-
-    def _heartbeat_timer(self):
-        """ Starts the heart beat thread to periodically send heart beat signals to the device"""
-        self._send_heartbeat()
-        heartbeat = threading.Timer(0.5, self._heartbeat_timer)
-        heartbeat.daemon = True  # Set as daemon thread (exit when main thread exits)
-        heartbeat.start()
-
     def _close(self):
         """Close the serial connection safely."""
         if self._ser and self._ser.is_open:
@@ -78,20 +69,25 @@ class SerialSendReceiveManager(SerialManager):
     def _send_acknowledgement_packet(self, struct_id: str):
         """ Sends an acknowledgement for the given struct type """
         if self._ser and self._ser.is_open:
-            self._ser.write(f";A{struct_id}")
+            self._ser.write(f"{self.ACKNOWLEDGEMENT_PREFIX}{struct_id}")
+
+    def _send_heartbeat(self):
+        self._send_struct(self.HEARTBEAT, self.HEARTBEAT_BEAT)
 
     def start_heartbeat(self):
-        """ Starts the heartbeat """
-        self._heartbeat_timer()
+        """ Starts the heart beat thread to periodically send heart beat signals to the device"""
+        self._send_heartbeat()
+        heartbeat = threading.Timer(0.5, self.start_heartbeat)
+        heartbeat.daemon = True  # Set as daemon thread (exit when main thread exits)
+        heartbeat.start()
 
     #### RECEIVING AND PROCESSING DATA ####
 
     def _parse_channel_live_data(self, unpacked_data: tuple):
-        pass
+        print("Channel Live Data Received:", unpacked_data)
 
     STRUCT_PARSERS = {
         0x01: _parse_channel_live_data,
-
     }
 
     def _receive_structs(self):
