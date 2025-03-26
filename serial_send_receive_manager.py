@@ -3,7 +3,6 @@ import struct
 import threading
 import time
 
-from serial_comms import STRUCT_FORMATS
 from serial_manager import SerialManager
 
 class SerialSendReceiveManager(SerialManager):
@@ -150,26 +149,44 @@ class SerialSendReceiveManager(SerialManager):
     def _receive_structs(self):
         """ Start a thread for receiving structs """
         while True:
-            struct_id = self._ser.read(1)[0]  # Extract the struct id from the first byte
+            try:
+                if not self._ser or not self._ser.is_open:
+                    time.sleep(1)  # Avoid tight loop if port is closed
+                    continue
 
-            if struct_id in self.STRUCT_PARSERS:
-                # Send ACK
-                self._send_acknowledgement_packet(struct_id)
+                # Use select with a timeout to prevent blocking indefinitely
+                if self._ser.in_waiting > 0:
+                    struct_id = self._ser.read(1)[0]  # Extract the struct id from the first byte
 
-                struct_format = STRUCT_FORMATS[struct_id]
-                struct_size = struct.calcsize(struct_format)
+                    if struct_id in self.STRUCT_PARSERS:
+                        # Send ACK
+                        self._send_acknowledgement_packet(struct_id)
 
-                struct_data = self._ser.read(struct_size - 1)  # -1 as struct ID (1 byte) already read
+                        struct_format = self.STRUCT_FORMATS[struct_id]
+                        struct_size = struct.calcsize(struct_format)
 
-                if len(struct_data) != struct_size - 1:
-                    print("RECEIVE ERROR: Incomplete data received!")
-                    continue  # Fail gracefully and skip this data
+                        struct_data = self._ser.read(struct_size - 1)  # -1 as struct ID (1 byte) already read
 
-                # Unpack the data into a tuple (excluding the struct_id)
-                unpacked_data = struct.unpack(struct_format, struct_data)
+                        if len(struct_data) != struct_size - 1:
+                            print("RECEIVE ERROR: Incomplete data received!")
+                            continue  # Fail gracefully and skip this data
 
-                # Parse data
-                self.STRUCT_PARSERS[struct_id](unpacked_data)
+                        # Unpack the data into a tuple (excluding the struct_id)
+                        unpacked_data = struct.unpack(struct_format, struct_data)
+
+                        # Parse data
+                        self.STRUCT_PARSERS[struct_id](unpacked_data)
+                    else:
+                        time.sleep(0.01)  # Short sleep to prevent CPU spinning
+                else:
+                    time.sleep(0.01)  # Short sleep when no data is available
+            except (serial.SerialException, OSError) as e:
+                print(f"Serial communication error: {e}")
+                self._close()
+                time.sleep(1)  # Prevent tight error loop
+            except Exception as e:
+                print(f"Unexpected error in receive thread: {e}")
+                time.sleep(1)
 
     def _start_receive_struct_thread(self):
         """ Starts the receiving struct thread """

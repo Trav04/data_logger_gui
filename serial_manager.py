@@ -3,9 +3,6 @@ import struct
 import threading
 import time
 
-from serial_receive_manager import SerialReceiveManager
-from serial_send_manager import SerialSendManager
-
 
 class SerialManager:
 
