@@ -7,16 +7,17 @@ from serial_manager import SerialManager
 
 class SerialSendReceiveManager(SerialManager):
     """ Class that handles the receiving of data """
-    HEARTBEAT = "heartbeat"
-    RTC_TIME = "rtc_time"
-    CHANNEL_LIVE_DATA = "channel_live_data"
-    CHANNEL_CONFIG = "channel_config"
-    OPTIC_CONNECTION = "optic_connection"
-    DEVICE_RECORDING_STATE = "device_recording_state"
+    HEARTBEAT = 0x06
+    RTC_TIME = 0x01
+    CHANNEL_LIVE_DATA = 0x02
+    CHANNEL_CONFIG = 0x03
+    OPTIC_CONNECTION = 0x04
+    DEVICE_RECORDING_STATE = 0x05
 
     ACKNOWLEDGEMENT_PREFIX = ";A"
 
     HEARTBEAT_BEAT = 0x06  # Heartbeat signal
+    RTC_ID = 0x01
 
     STRUCT_FORMATS = {
         HEARTBEAT: "B",  # uint8_t beat = 0x06
@@ -81,7 +82,7 @@ class SerialSendReceiveManager(SerialManager):
 
         try:
             packed_data = struct.pack(fmt, *args)
-            ack_expected = f";A{struct_id}".encode()  # Expected ACK response
+            ack_expected = b";A" + struct.pack("B", struct_id)  # Expected ACK packet
 
             with self.lock:
                 if self._ser and self._ser.is_open:

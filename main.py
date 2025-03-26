@@ -32,10 +32,22 @@ def main():
 
     controller = MainController(model, view)
 
+    rtc_struct_id = 0x01
+    year = 2024
+    month = 3
+    day = 26
+    hour = 15
+    minute = 48
+    second = 32
+
+    # Send the RTC struct
+
     ## Initiate PC communication signal thread
     serial = SerialSendReceiveManager()
     serial.start_heartbeat()
 
+    success = serial._send_struct_ack_wait(rtc_struct_id, rtc_struct_id, year, month, day, hour, minute, second)
+    print(success)
     view.show()
     sys.exit(app.exec_())
 
