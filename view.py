@@ -1,4 +1,6 @@
 # view.py
+import time
+
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QFileDialog, QLabel, QSpinBox, QComboBox, QFormLayout, QGroupBox, QScrollArea,
                              QCheckBox, QDoubleSpinBox, QFrame)
@@ -7,7 +9,8 @@ from PyQt5.QtGui import QColor
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-from model import CHANNEL_TYPE_ACCELERATION
+from model import CHANNEL_TYPE_ACCELERATION, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE_DISABLED, ALARM_TYPE_LIVE, \
+    ALARM_TYPE_LATCHED
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_VOLTAGE
 
@@ -123,7 +126,8 @@ class GraphCanvas(FigureCanvas):
 
 
 class ChannelConfigGroup(QGroupBox):
-    config_changed = pyqtSignal(str)  # Emits channel name when config changes
+    # config_changed = pyqtSignal(str)  # Emits channel name when config changes
+    selected_channel_changed = pyqtSignal(int)
     alarms_changed = pyqtSignal(int)
     input_range_changed = pyqtSignal(int)
     alarm_type_changed = pyqtSignal(int)
@@ -139,7 +143,7 @@ class ChannelConfigGroup(QGroupBox):
         self.alarm_low_spin = QSpinBox()
         self.input_range_combo = QComboBox()
         self.alarm_type_combo = QComboBox()
-        self.alarm_state_led = StatusLED()
+        self.alarm_occurring_led = StatusLED()
         self.temp_enable_check = QCheckBox("Enable Temperature")
         self.current_source_combo = QComboBox()
         self.sensor_type_combo = QComboBox()
@@ -160,14 +164,13 @@ class ChannelConfigGroup(QGroupBox):
         layout.addRow(QLabel("Alarm Low:"), self.alarm_low_spin)
 
         # Input Range
-        self.input_range_combo.addItems(['+/-10V', '+/-1V'])
+        self.input_range_combo.addItems([INPUT_RANGE_10V, INPUT_RANGE_1V])
         layout.addRow(QLabel("Input Range:"), self.input_range_combo)
 
         # Alarm State
-        self.alarm_type_combo.addItems(['Disabled', 'Latched', 'Live'])
-        self.alarm_type_combo.setEnabled(False)
+        self.alarm_type_combo.addItems([ALARM_TYPE_DISABLED, ALARM_TYPE_LIVE, ALARM_TYPE_LATCHED])
         layout.addRow(QLabel("Alarm Type:"), self.alarm_type_combo)
-        layout.addRow(QLabel("Alarm State (ON / OFF):"), self.alarm_state_led)
+        layout.addRow(QLabel("Alarm Occurring (YES/NO):"), self.alarm_occurring_led)
 
         # Temperature Conversion
         self.temp_enable_check.toggled.connect(self._toggle_temp_config)
@@ -186,23 +189,34 @@ class ChannelConfigGroup(QGroupBox):
 
     def _connect_internal_signals(self):
         """Connect all UI changes to emit config_changed."""
+        self.channel_combo.currentTextChanged.connect(self._emit_selected_channel_changed)
         self.alarm_high_spin.valueChanged.connect(self._emit_alarms_changed)
         self.alarm_low_spin.valueChanged.connect(self._emit_alarms_changed)
-        self.input_range_combo.currentTextChanged.connect(self._emit_config_changed)
-        self.temp_enable_check.toggled.connect(self._emit_config_changed)
-        self.current_source_combo.currentTextChanged.connect(self._emit_config_changed)
-        self.sensor_type_combo.currentTextChanged.connect(self._emit_config_changed)
+        self.input_range_combo.currentTextChanged.connect(self._emit_input_range_changed)
+        self.alarm_type_combo.currentTextChanged.connect(self._emit_alarm_type_changed)
+        # self.temp_enable_check.toggled.connect(self._emit_config_changed)
+        # self.current_source_combo.currentTextChanged.connect(self._emit_config_changed)
+        # self.sensor_type_combo.currentTextChanged.connect(self._emit_config_changed)
 
-    def _emit_config_changed(self):
-        """Emit signal with the currently selected channel."""
-        channel = self.get_selected_channel()
+    def _emit_alarm_type_changed(self):
+        channel = int(self.get_selected_channel())
         if channel:
-            self.config_changed.emit(channel)
+            self.alarm_type_changed.emit(channel)
 
     def _emit_alarms_changed(self):
         channel = int(self.get_selected_channel())
         if channel:
             self.alarms_changed.emit(channel)
+
+    def _emit_input_range_changed(self):
+        channel = int(self.get_selected_channel())
+        if channel:
+            self.input_range_changed.emit(channel)
+
+    def _emit_selected_channel_changed(self):
+        channel = int(self.get_selected_channel())
+        if channel:
+            self.selected_channel_changed.emit(channel)
 
     def get_selected_channel(self) -> str:
         """Get the currently selected channel name."""
@@ -232,9 +246,16 @@ class ChannelConfigGroup(QGroupBox):
         """Get the selected sensor type."""
         return self.sensor_type_combo.currentText()
 
+    def get_alarm_type(self):
+        """Get the selected alarm type."""
+        return self.alarm_type_combo.currentText()
+
     def set_channel_drop_down_item(self, channel):
         """ Add a single string to the ch drop down list """
         self.channel_combo.addItem(channel)
+
+    def set_alarm_occurring(self, status: bool):
+        self.alarm_occurring_led.set_status(status)
 
 class MainWindowView(QMainWindow):
     load_replay = pyqtSignal(str)
@@ -417,6 +438,10 @@ class MainWindowView(QMainWindow):
         self.rtc_status.setStyleSheet("color: red;")
         rtc_layout.addWidget(self.rtc_status)
 
+        # System Time Display
+        self.system_time_label = QLabel(time.strftime('%H:%M:%S'))
+        rtc_layout.addWidget(self.system_time_label)
+
         sync_rtc_btn = QPushButton("Sync RTC")
         sync_rtc_btn.clicked.connect(self.sync_rtc.emit)
         rtc_layout.addWidget(sync_rtc_btn)
@@ -468,3 +493,10 @@ class MainWindowView(QMainWindow):
             self.recording_status.setText("Not Recording")
             self.recording_status.setStyleSheet("color: red;")
             self.toggle_recording_btn.setText("Start Recording")
+
+    def set_rtc_time(self):
+        self.rtc_status.setText("Synced")
+        self.rtc_status.setStyleSheet("color: green;")
+
+    # def update_rtc_time(self):
+    #

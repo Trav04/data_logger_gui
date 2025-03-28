@@ -2,7 +2,7 @@
 from PyQt5.QtCore import QTimer
 import numpy as np
 
-from model import CHANNEL_TYPE_VOLTAGE
+from model import CHANNEL_TYPE_VOLTAGE, INPUT_RANGE, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE, ALARM_OCCURRING
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_ACCELERATION
 from model import CHANNEL_TYPE_RESISTIVE_TEMPERATURE
@@ -33,14 +33,9 @@ class MainController:
         self.view = view
         self.current_max_points = 1000  # Track max points in controller (User input)
 
-
         self._connect_signals()
         self._init_timer()
         self._init_channel_configs()  # Add initialised channels to the drop down menu
-
-        # # Only if fake data used #
-        # self._fake_data_index = 0
-        # self._init_fake_data()
 
     def _init_channel_configs(self):
         channel_configs = self.model.get_channel_configs()
@@ -48,21 +43,46 @@ class MainController:
             self.view.edit_channel_config_view().set_channel_drop_down_item(str(channel))
 
     def _connect_signals(self):
-        self.view.load_replay.connect(self.handle_load_replay)
+        self.view.load_replay.connect(self._handle_load_replay)
         self.view.max_points.connect(self.handle_max_points_changed)
-        self.view.channel_visibility_change.connect(self.handle_visibility_changed)
+        self.view.channel_visibility_change.connect(self._handle_visibility_changed)
         self.view.axis_range_changed.connect(self.handle_axis_range_changed)
-        self.view.clear_data.connect(self.handle_clear_data)
-        self.view.graph_canvas.hover_signal.connect(self.handle_hover)
+        self.view.clear_data.connect(self._handle_clear_data)
+        self.view.graph_canvas.hover_signal.connect(self._handle_hover)
 
         # Device status panel
         self.view.toggle_recording.connect(self._handle_toggle_recording)
 
         # Channel config connects
-        self.view.config_group.config_changed.connect(self._handle_config_changed)
+        self.view.config_group.selected_channel_changed.connect(self._handle_channel_changed)
         self.view.config_group.alarms_changed.connect(self._handle_alarms_changed)
+        self.view.config_group.input_range_changed.connect(self._handle_input_range_changed)
+        self.view.config_group.alarm_type_changed.connect(self._handle_alarm_type_changed)
 
     ## TODO Update the channel config in the model, update the entire structure for that channel each time a param changes
+    def _handle_channel_changed(self, channel: int):
+        """Update channel type and update the model."""
+        # Get the current alarm status for the channel
+        status = self.model.get_channel_configs()[channel][ALARM_OCCURRING]
+        # Set the corresponding alarm state for this channel
+        self.view.config_group.set_alarm_occurring(status)
+
+    def _handle_alarm_type_changed(self, channel):
+        """Update alarm type for a channel."""
+        print("type changed")
+
+        alarm_type = self.view.config_group.get_alarm_type()
+        self.model.get_channel_configs()[channel][ALARM_TYPE] = alarm_type
+
+    def _handle_input_range_changed(self, channel):
+        """Update input range for a channel."""
+        input_range = self.view.config_group.get_input_range()
+        trimmed_range = 0
+        if input_range == INPUT_RANGE_10V:
+            trimmed_range = 10
+        elif input_range == INPUT_RANGE_1V:
+            trimmed_range = 1
+        self.model.get_channel_configs()[channel][INPUT_RANGE] = trimmed_range
 
     def _handle_alarms_changed(self, channel):
         """Validate and update alarm thresholds for a channel."""
@@ -76,38 +96,12 @@ class MainController:
         self.model.get_channel_configs()[channel][ALARM_HIGH] = high
         self.model.get_channel_configs()[channel][ALARM_LOW] = low
 
-    def _handle_config_changed(self, channel):
-        # Check that the alarm thresholds are valid
-        self._validate_alarm_thresholds(channel)
-
-        print("Hello world: ", channel)
-
     def _handle_toggle_recording(self):
         """Toggle recording state and update the view."""
         self.view.toggle_recording_status()
         # Only if fake data used #
         self._fake_data_index = 0
         self._init_fake_data()
-
-    # def _update_input_range(self, channel):
-    #     """Update input range for a channel."""
-    #     print("Hey")
-    #
-    # def _update_temp_config(self, channel):
-    #     """Update temperature conversion for a channel."""
-    #     enabled = self.view.config_group.get_temp_enabled()
-    #     self.model.channel_configs[channel]['resistive_temp_enabled'] = enabled
-    #     self.model.update_channel_type(channel)
-    #
-    # def _update_current_source(self, channel):
-    #     """Update current source for a channel."""
-    #     current_source = self.view.config_group.get_current_source()
-    #     self.model.channel_configs[channel]['current_source'] = current_source
-    #
-    # def _update_sensor_type(self, channel):
-    #     """Update sensor type for a channel."""
-    #     sensor_type = self.view.config_group.get_sensor_type()
-    #     self.model.channel_configs[channel]['sensor_type'] = sensor_type
 
     def _init_fake_data(self):
         """Start a timer that simulates incoming data every 500ms."""
@@ -143,26 +137,30 @@ class MainController:
         """Update the Y-axis range of the plot."""
         self.view.edit_graph_canvas_view().set_y_lim(y_min, y_max)
 
-    def handle_clear_data(self):
+    def _handle_clear_data(self):
         """Clear all data from the model and update the plot."""
         self.view.edit_graph_canvas_view().clear_plot()
         self.model.clear_data()
 
-    def handle_load_replay(self, filename):
+    def _handle_load_replay(self, filename):
+        print("Hey")
         success = self.model.load_csv(filename)
         if success:
             self.view.status_bar.showMessage(f"Loaded: {filename}", 5000)
             # Populate channel dropdown
+            self.view.config_group.channel_combo.blockSignals(True)
             self.view.config_group.channel_combo.clear()
             self.view.config_group.channel_combo.addItems(self.model.replay_data.keys())
+            self.view.config_group.channel_combo.blockSignals(False)
+
         else:
             self.view.status_bar.showMessage("Invalid file format", 5000)
         self.update_plot()
 
-    def handle_visibility_changed(self):
+    def _handle_visibility_changed(self):
         self.update_plot()
 
-    def handle_hover(self, x, global_x, global_y):
+    def _handle_hover(self, x, global_x, global_y):
         """Handle hover events on the plot canvas, showing tooltips for selected channels."""
         if x is None:
             self.view.tooltip_label.hide()
@@ -188,6 +186,10 @@ class MainController:
         self.view.tooltip_label.adjustSize()
         self.view.tooltip_label.move(global_x + 15, global_y + 15)
         self.view.tooltip_label.show()
+
+    def update_channel_config(self, channel, config):
+        """Update channel config in the model and update the plot."""
+        ## TODO To be implemented. Serial comms will send a channel map, the model should be updated here
 
     def update_plot(self):
         """Update plots with truncated data based on current_max_points."""

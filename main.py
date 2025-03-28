@@ -4,7 +4,8 @@ import time
 
 from PyQt5.QtWidgets import QApplication
 from model import DataModel
-from serial_communication import SerialManager
+from serial_manager import SerialManager
+from serial_send_receive_manager import SerialSendReceiveManager
 from view import MainWindowView
 from controller import MainController
 
@@ -30,12 +31,24 @@ def main():
     model.initialize_channel_config(8, CHANNEL_TYPE_TEMPERATURE)
 
     controller = MainController(model, view)
-    serial = SerialManager()
+
+    rtc_struct_id = 0x01
+    year = 2024
+    month = 3
+    day = 26
+    hour = 15
+    minute = 48
+    second = 32
+
+    # Send the RTC struct
 
     ## Initiate PC communication signal thread
+    serial = SerialSendReceiveManager()
     serial.start_heartbeat()
+
+    # success = serial._send_struct_ack_wait(rtc_struct_id, rtc_struct_id, year, month, day, hour, minute, second)
+    # print(success)
     view.show()
-    ## TODO Kill threads when I close the pc software
     sys.exit(app.exec_())
 
 if __name__ == "__main__":
