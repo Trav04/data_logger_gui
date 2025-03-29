@@ -1,5 +1,6 @@
 # model.py
 import csv
+import threading
 from datetime import datetime
 from pprint import pprint
 
@@ -63,6 +64,14 @@ class DataModel:
         self.live_data = {channel: [] for channel in range(1, 9)}
         self.live_relative_times = []
         self.start_time = None
+
+        # Modify the data
+        self._semaphore_channel_live_data = threading.Semaphore()
+        self._semaphore_channel_config = threading.Semaphore()
+        # self._semaphore_live_data = threading.Semaphore()
+        self._semaphore_rtc_time = threading.Semaphore()
+        self._semaphore_optic_connection = threading.Semaphore()
+        self._semaphore_device_recording_state = threading.Semaphore()
 
     def initialize_channel_config(self, channel, channel_type):
         """Initialize default configuration for a channel"""
@@ -184,7 +193,11 @@ class DataModel:
 
     def get_channel_configs(self):
         return self.channel_configs
-        print(self.channel_configs)
+
+    def set_channel_config_param(self, channel, config_param, value):
+        with self._semaphore_channel_config:
+            self.channel_configs[channel][config_param] = value
+
 
     def clear_data(self):
         self.live_data = {channel: [] for channel in range(1, 9)}
