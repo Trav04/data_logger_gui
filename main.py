@@ -46,8 +46,8 @@ def main():
     serial = SerialSendReceiveManager()
     serial.start_heartbeat()
 
-    success = serial._send_struct_ack_wait(rtc_struct_id, rtc_struct_id, year, month, day, hour, minute, second)
-    print(success)
+    # success = serial._send_struct_ack_wait(rtc_struct_id, rtc_struct_id, year, month, day, hour, minute, second)
+    # print(success)
     view.show()
     sys.exit(app.exec_())
 

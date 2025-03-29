@@ -126,7 +126,8 @@ class SerialSendReceiveManager(SerialManager):
     def _send_acknowledgement_packet(self, struct_id: str):
         """ Sends an acknowledgement for the given struct type """
         if self._ser and self._ser.is_open:
-            self._ser.write(f"{self.ACKNOWLEDGEMENT_PREFIX}{struct_id}")
+            ack_packet = b";A" + struct.pack("B", struct_id)
+            self._ser.write(ack_packet)
 
     def _send_heartbeat(self):
         self._send_struct(self.HEARTBEAT, self.HEARTBEAT_BEAT)
@@ -141,7 +142,24 @@ class SerialSendReceiveManager(SerialManager):
     #### RECEIVING AND PROCESSING DATA ####
 
     def _parse_channel_live_data(self, unpacked_data: tuple):
+        """ Receive the live data and update the live channel data struct """
         print("Channel Live Data Received:", unpacked_data)
+
+    def _parse_channel_config(self, unpacked_data: tuple):
+        """ Receive the channel configuration data """
+        print("Channel Config Received:", unpacked_data)
+
+    def _parse_optic_connection(self, unpacked_data: tuple):
+        """ Receive the optic connection data """
+        print("Optic Connection Received:", unpacked_data)
+
+    def _parse_device_recording_state(self, unpacked_data: tuple):
+        """ Receive the device recording state data """
+        print("Device Recording State Received:", unpacked_data)
+
+    def _parse_rtc_time(self, unpacked_data: tuple):
+        """ Receive the RTC time data """
+        print("RTC Time Received:", unpacked_data)
 
     STRUCT_PARSERS = {
         0x01: _parse_channel_live_data,
@@ -167,7 +185,8 @@ class SerialSendReceiveManager(SerialManager):
                         struct_size = struct.calcsize(struct_format)
 
                         struct_data = self._ser.read(struct_size - 1)  # -1 as struct ID (1 byte) already read
-
+                        print("Struct ID", struct_id)
+                        print("Struct Data", struct_data)
                         if len(struct_data) != struct_size - 1:
                             print("RECEIVE ERROR: Incomplete data received!")
                             continue  # Fail gracefully and skip this data
