@@ -1,3 +1,5 @@
+# SerialSendReceiveManager.py
+
 import serial
 import struct
 import threading
@@ -23,7 +25,7 @@ class SerialSendReceiveManager(SerialManager):
         HEARTBEAT: "B",  # uint8_t beat = 0x06
         RTC_TIME: "B H 5B",  # struct_id (uint8), year (uint16), month, day, hour, min, sec (5x uint8)
         CHANNEL_LIVE_DATA: "B B H 5B 8B",  # struct_id (uint8), rtc_struct, 8x uint8 channels
-        CHANNEL_CONFIG: "B 7B",  # struct_id (uint8), 7x uint8_t values
+        CHANNEL_CONFIG: "B 9B",  # struct_id (uint8), 7x uint8_t values # NOTE: Ethan has changed this.
         OPTIC_CONNECTION: "B B",  # struct_id (uint8), recording_state (uint8)
         DEVICE_RECORDING_STATE: "B B"  # struct_id (uint8), optic_state (uint8)
     }
@@ -135,31 +137,14 @@ class SerialSendReceiveManager(SerialManager):
     def start_heartbeat(self):
         """ Starts the heart beat thread to periodically send heart beat signals to the device"""
         self._send_heartbeat()
-        heartbeat = threading.Timer(0.5, self.start_heartbeat)
+        heartbeat = threading.Timer(1.5, self.start_heartbeat)
         heartbeat.daemon = True  # Set as daemon thread (exit when main thread exits)
         heartbeat.start()
 
     #### RECEIVING AND PROCESSING DATA ####
 
     def _parse_channel_live_data(self, unpacked_data: tuple):
-        """ Receive the live data and update the live channel data struct """
         print("Channel Live Data Received:", unpacked_data)
-
-    def _parse_channel_config(self, unpacked_data: tuple):
-        """ Receive the channel configuration data """
-        print("Channel Config Received:", unpacked_data)
-
-    def _parse_optic_connection(self, unpacked_data: tuple):
-        """ Receive the optic connection data """
-        print("Optic Connection Received:", unpacked_data)
-
-    def _parse_device_recording_state(self, unpacked_data: tuple):
-        """ Receive the device recording state data """
-        print("Device Recording State Received:", unpacked_data)
-
-    def _parse_rtc_time(self, unpacked_data: tuple):
-        """ Receive the RTC time data """
-        print("RTC Time Received:", unpacked_data)
 
     STRUCT_PARSERS = {
         0x01: _parse_channel_live_data,

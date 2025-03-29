@@ -1,3 +1,5 @@
+# main.py
+
 import sys
 import time
 
@@ -40,16 +42,48 @@ def main():
     minute = 48
     second = 32
 
+    recorded_struct_id = 0x05
+    recording_state = 1#0x01
+
+    config_id = 0x03
+    channel_type = 0x56
+    channel_id = 0x01
+    input_range = 0x10
+    alarm_type = 0x01
+    alarm_state = 0x01
+    alarm_occurring = 0x01
+    resistive_temp = 0x00
+    current_source = 0x00
+    sensor_type = 0x00
+
     # Send the RTC struct
 
     ## Initiate PC communication signal thread
     serial = SerialSendReceiveManager()
-    serial.start_heartbeat()
+    #serial.start_heartbeat()
 
-    # success = serial._send_struct_ack_wait(rtc_struct_id, rtc_struct_id, year, month, day, hour, minute, second)
-    # print(success)
+    #success = serial._send_struct_ack_wait(rtc_struct_id, rtc_struct_id, year, month, day, hour, minute, second)
+    #success = serial._send_struct_ack_wait(recorded_struct_id, recorded_struct_id, recording_state)
+    success = serial._send_struct_ack_wait(config_id, config_id, channel_type, channel_id, input_range, alarm_type, alarm_state, alarm_occurring, resistive_temp, current_source, sensor_type)
+    print(success)
+
+    
+    #while(1):
+        #success = serial._send_struct_ack_wait(rtc_struct_id, rtc_struct_id, year, month, day, hour, minute, second)
+        #success = serial._send_struct_ack_wait(recorded_struct_id, recorded_struct_id, recording_state)
+        #print(success)
+
+        #time.sleep(1)
+
+        #success = serial._send_struct_ack_wait(recorded_struct_id, recorded_struct_id, recording_state)
+        #print(success)
+
+        #time.sleep(1)
+    
+
     view.show()
     sys.exit(app.exec_())
+
 
 if __name__ == "__main__":
     main()
