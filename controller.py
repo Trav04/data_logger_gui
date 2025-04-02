@@ -3,7 +3,7 @@ from PyQt5.QtCore import QTimer
 import numpy as np
 
 from model import CHANNEL_TYPE_VOLTAGE, INPUT_RANGE, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE, ALARM_OCCURRING, \
-    TEMP_ENABLED, CURRENT_SOURCE, SENSOR_TYPE, TEMP_SENSOR_DISABLED
+    TEMP_ENABLED, CURRENT_SOURCE, SENSOR_TYPE, TEMP_SENSOR_DISABLED, CURRENT_SOURCE_DISABLED
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_ACCELERATION
 from model import CHANNEL_TYPE_RESISTIVE_TEMPERATURE
@@ -81,7 +81,6 @@ class MainController:
         """Update current source used by the resistive temperature channel """
         current_source = self.view.config_group.get_current_source()
         self.model.set_channel_config_param(channel, CURRENT_SOURCE, current_source)
-        print(self.model.get_channel_configs())
 
     def _handle_resistive_temp_mode_changed(self, channel):
         """
@@ -94,7 +93,7 @@ class MainController:
         else:
             channel_type = CHANNEL_TYPE_VOLTAGE
             self.model.set_channel_config_param(channel, CURRENT_SOURCE, TEMP_SENSOR_DISABLED) # Disable current source
-            self.model.set_channel_config_param(channel, SENSOR_TYPE, TEMP_SENSOR_DISABLED)  # Disable sensor type
+            self.model.set_channel_config_param(channel, SENSOR_TYPE, CURRENT_SOURCE_DISABLED)  # Disable sensor type
         # Update channel type
         self.model.set_channel_config_param(channel, CHANNEL_TYPE, channel_type)
         # Update resistive temp mode
@@ -108,12 +107,7 @@ class MainController:
     def _handle_input_range_changed(self, channel):
         """Update input range for a channel."""
         input_range = self.view.config_group.get_input_range()
-        trimmed_range = 0
-        if input_range == INPUT_RANGE_10V:
-            trimmed_range = 10
-        elif input_range == INPUT_RANGE_1V:
-            trimmed_range = 1
-        self.model.set_channel_config_param(channel, INPUT_RANGE, trimmed_range)
+        self.model.set_channel_config_param(channel, INPUT_RANGE, input_range)
 
     def _handle_alarms_changed(self, channel):
         """Validate and update alarm thresholds for a channel."""
@@ -223,6 +217,7 @@ class MainController:
 
     def update_plot(self):
         """Update plots with truncated data based on current_max_points."""
+        print(self.model.get_channel_configs())
         plot_data = self.model.get_data()
         if plot_data:
             # Truncate data to current_max_points

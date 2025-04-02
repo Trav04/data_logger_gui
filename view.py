@@ -10,7 +10,9 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 from model import CHANNEL_TYPE_ACCELERATION, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE_DISABLED, ALARM_TYPE_LIVE, \
-    ALARM_TYPE_LATCHED, CURRENT_SOURCE_10UA, CURRENT_SOURCE_200UA, TEMP_SENSOR_THERMISTOR, TEMP_SENSOR_RTD
+    ALARM_TYPE_LATCHED, CURRENT_SOURCE_10UA, CURRENT_SOURCE_200UA, TEMP_SENSOR_THERMISTOR, TEMP_SENSOR_RTD, \
+    V_ALARM_TYPE_DISABLED, V_ALARM_TYPE_LIVE, V_ALARM_TYPE_LATCHED, V_INPUT_RANGE_10V, V_INPUT_RANGE_1V, \
+    V_TEMP_SENSOR_THERMISTOR, V_TEMP_SENSOR_RTD, V_CURRENT_SOURCE_10UA, V_CURRENT_SOURCE_200UA
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_VOLTAGE
 
@@ -164,18 +166,18 @@ class ChannelConfigGroup(QGroupBox):
         layout.addRow(QLabel("Alarm Low:"), self.alarm_low_spin)
 
         # Input Range
-        self.input_range_combo.addItems([INPUT_RANGE_10V, INPUT_RANGE_1V])
+        self.input_range_combo.addItems([V_INPUT_RANGE_10V, V_INPUT_RANGE_1V])
         layout.addRow(QLabel("Input Range:"), self.input_range_combo)
 
         # Alarm State
-        self.alarm_type_combo.addItems([ALARM_TYPE_DISABLED, ALARM_TYPE_LIVE, ALARM_TYPE_LATCHED])
+        self.alarm_type_combo.addItems([V_ALARM_TYPE_DISABLED, V_ALARM_TYPE_LIVE, V_ALARM_TYPE_LATCHED])
         layout.addRow(QLabel("Alarm Type:"), self.alarm_type_combo)
         layout.addRow(QLabel("Alarm Occurring (YES/NO):"), self.alarm_occurring_led)
 
         # Temperature Conversion
         self.resistive_temp_checkbox.toggled.connect(self._toggle_temp_config)
-        self.current_source_combo.addItems([CURRENT_SOURCE_10UA, CURRENT_SOURCE_200UA])
-        self.sensor_type_combo.addItems([TEMP_SENSOR_THERMISTOR, TEMP_SENSOR_RTD])
+        self.current_source_combo.addItems([V_CURRENT_SOURCE_10UA, V_CURRENT_SOURCE_200UA])
+        self.sensor_type_combo.addItems([V_TEMP_SENSOR_THERMISTOR, V_TEMP_SENSOR_RTD])
         temp_layout = QHBoxLayout()
         temp_layout.addWidget(self.current_source_combo)
         temp_layout.addWidget(self.sensor_type_combo)
@@ -245,25 +247,43 @@ class ChannelConfigGroup(QGroupBox):
         """Get the current alarm low value."""
         return self.alarm_low_spin.value()
 
-    def get_input_range(self) -> str:
+    def get_input_range(self) -> int|None:
         """Get the selected input range."""
-        return self.input_range_combo.currentText()
+        input_range = self.input_range_combo.currentText()
+        if input_range == V_INPUT_RANGE_10V:
+            return INPUT_RANGE_10V
+        elif input_range == V_INPUT_RANGE_1V:
+            return INPUT_RANGE_1V
 
     def get_resistive_temp_mode(self) -> bool:
         """Check if temperature conversion is enabled."""
         return self.resistive_temp_checkbox.isChecked()
 
-    def get_current_source(self) -> str:
+    def get_current_source(self) -> int|None:
         """Get the selected current source."""
-        return self.current_source_combo.currentText()
+        cs = self.current_source_combo.currentText()
+        if cs == V_CURRENT_SOURCE_200UA:
+            return CURRENT_SOURCE_200UA
+        elif cs == V_CURRENT_SOURCE_10UA:
+            return CURRENT_SOURCE_10UA
 
-    def get_resistive_sensor_type(self) -> str:
+    def get_resistive_sensor_type(self) -> int|None:
         """Get the selected sensor type."""
-        return self.sensor_type_combo.currentText()
+        sensor = self.sensor_type_combo.currentText()
+        if sensor == V_TEMP_SENSOR_THERMISTOR:
+            return TEMP_SENSOR_THERMISTOR
+        elif sensor == V_TEMP_SENSOR_RTD:
+            return TEMP_SENSOR_RTD
 
-    def get_alarm_type(self):
+    def get_alarm_type(self) -> int|None:
         """Get the selected alarm type."""
-        return self.alarm_type_combo.currentText()
+        alarm_type = self.alarm_type_combo.currentText()
+        if alarm_type == V_ALARM_TYPE_DISABLED:
+            return ALARM_TYPE_DISABLED
+        elif alarm_type == V_ALARM_TYPE_LATCHED:
+            return ALARM_TYPE_LATCHED
+        elif alarm_type == V_ALARM_TYPE_LIVE:
+            return ALARM_TYPE_LIVE
 
     def set_channel_drop_down_item(self, channel):
         """ Add a single string to the ch drop down list """
