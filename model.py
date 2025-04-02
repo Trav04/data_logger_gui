@@ -40,6 +40,7 @@ CURRENT_SOURCE_200UA = "200μA"
 
 TEMP_SENSOR_THERMISTOR = "Thermistor"
 TEMP_SENSOR_RTD = "Platinum RTD"
+TEMP_SENSOR_DISABLED = "Disabled"
 
 ## Channel CONFIG defines
 CHANNEL_TYPE = 'channel_type'
@@ -51,6 +52,33 @@ TEMP_ENABLED = 'temp_enabled'
 CURRENT_SOURCE = 'current_source'
 SENSOR_TYPE = 'sensor_type'
 ALARM_TYPE = 'alarm_type'
+
+
+## SC: Serial Comms values as hex
+SC_CHANNEL_TYPE_VOLTAGE = 0x56
+SC_CHANNEL_TYPE_ACCELEROMETER = 0x41
+SC_CHANNEL_TYPE_TEMP = 0x54
+
+SC_INPUT_RANGE_10V = 0x10
+SC_INPUT_RANGE_1V = 0x01
+
+SC_ALARM_TYPE_LIVE = 0x01
+SC_ALARM_TYPE_LATCHED = 0x02
+SC_ALARM_TYPE_DISABLED = 0x00
+
+SC_ALARM_OCCURRING = 0x01
+SC_ALARM_NOT_OCCURRING = 0x00
+
+SC_RESISTIVE_TEMP_ENABLED = 0x01
+SC_RESISTIVE_TEMP_DISABLED = 0x00
+
+SC_CURRENT_SOURCE_10UA = 0x10
+SC_CURRENT_SOURCE_200UA = 0x20
+SC_CURRENT_SOURCE_DISABLED = 0x00
+
+SC_RESISTIVE_SENSOR_THERMISTOR = 0x01
+SC_RESISTIVE_SENSOR_RTD = 0x02
+SC_RESISTIVE_SENSOR_DISABLED = 0x00
 
 class DataModel:
     def __init__(self):
@@ -84,8 +112,8 @@ class DataModel:
                 ALARM_TYPE: ALARM_TYPE_DISABLED,  # Default to disabled
                 ALARM_OCCURRING: True,  # Default OFF
                 TEMP_ENABLED: False,  # Default not resistive temperature mode
-                CURRENT_SOURCE: CURRENT_SOURCE_10UA if channel_type == CHANNEL_TYPE_RESISTIVE_TEMPERATURE else None,
-                SENSOR_TYPE: TEMP_SENSOR_THERMISTOR if channel_type == CHANNEL_TYPE_RESISTIVE_TEMPERATURE else None
+                CURRENT_SOURCE: CURRENT_SOURCE_10UA if channel_type == CHANNEL_TYPE_RESISTIVE_TEMPERATURE else 0, # 0 represents None for better C compatibility
+                SENSOR_TYPE: TEMP_SENSOR_THERMISTOR if channel_type == CHANNEL_TYPE_RESISTIVE_TEMPERATURE else 0 # 0 represents None for better C compatibility
             }
 
     def store_live_data(self, timestamp, channel_values):

@@ -133,7 +133,7 @@ class ChannelConfigGroup(QGroupBox):
     alarm_type_changed = pyqtSignal(int)
     resistive_temp_mode_changed = pyqtSignal(int)
     current_source_changed = pyqtSignal(int)
-    sensor_type_changed = pyqtSignal(int)
+    resistive_sensor_type_changed = pyqtSignal(int)
 
 
     def __init__(self):

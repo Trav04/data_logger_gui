@@ -3,7 +3,7 @@ from PyQt5.QtCore import QTimer
 import numpy as np
 
 from model import CHANNEL_TYPE_VOLTAGE, INPUT_RANGE, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE, ALARM_OCCURRING, \
-    TEMP_ENABLED, CURRENT_SOURCE
+    TEMP_ENABLED, CURRENT_SOURCE, SENSOR_TYPE, TEMP_SENSOR_DISABLED
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_ACCELERATION
 from model import CHANNEL_TYPE_RESISTIVE_TEMPERATURE
@@ -86,8 +86,13 @@ class MainController:
             channel_type = CHANNEL_TYPE_RESISTIVE_TEMPERATURE
         else:
             channel_type = CHANNEL_TYPE_VOLTAGE
+            self.model.set_channel_config_param(channel, CURRENT_SOURCE, TEMP_SENSOR_DISABLED) # Disable current source
+            self.model.set_channel_config_param(channel, SENSOR_TYPE, TEMP_SENSOR_DISABLED)  # Disable sensor type
+        # Update channel type
         self.model.set_channel_config_param(channel, CHANNEL_TYPE, channel_type)
+        # Update resistive temp mode
         self.model.set_channel_config_param(channel, TEMP_ENABLED, resistive_temp_mode)
+        print(self.model.get_channel_configs())
 
     def _handle_alarm_type_changed(self, channel):
         """Update alarm type for a channel."""
