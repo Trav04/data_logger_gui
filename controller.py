@@ -62,17 +62,16 @@ class MainController:
     ## TODO Update the channel config in the model, update the entire structure for that channel each time a param changes
     def _handle_channel_changed(self, channel: int):
         """Update channel type and update the model."""
-        # Get the current alarm status for the channel
-        status = self.model.get_channel_configs()[channel][ALARM_OCCURRING]
-        # Set the corresponding alarm state for this channel
-        self.view.config_group.set_alarm_occurring(status)
+        # # Get the current alarm status for the channel
+        # status = self.model.get_channel_configs()[channel][ALARM_OCCURRING]
+        # # Set the corresponding alarm state for this channel
+        # self.view.config_group.set_alarm_occurring(status)
+        # TODO A thread will update the current channel status
 
     def _handle_alarm_type_changed(self, channel):
         """Update alarm type for a channel."""
-        print("type changed")
-
         alarm_type = self.view.config_group.get_alarm_type()
-        self.model.get_channel_configs()[channel][ALARM_TYPE] = alarm_type
+        self.model.set_channel_config_param(channel, ALARM_TYPE, alarm_type)
 
     def _handle_input_range_changed(self, channel):
         """Update input range for a channel."""
@@ -82,7 +81,7 @@ class MainController:
             trimmed_range = 10
         elif input_range == INPUT_RANGE_1V:
             trimmed_range = 1
-        self.model.get_channel_configs()[channel][INPUT_RANGE] = trimmed_range
+        self.model.set_channel_config_param(channel, INPUT_RANGE, trimmed_range)
 
     def _handle_alarms_changed(self, channel):
         """Validate and update alarm thresholds for a channel."""
@@ -93,8 +92,8 @@ class MainController:
             self.view.config_group.alarm_high_spin.setValue(low)
             high = low
 
-        self.model.get_channel_configs()[channel][ALARM_HIGH] = high
-        self.model.get_channel_configs()[channel][ALARM_LOW] = low
+        self.model.set_channel_config_param(channel, ALARM_HIGH, high)
+        self.model.set_channel_config_param(channel, ALARM_LOW, low)
 
     def _handle_toggle_recording(self):
         """Toggle recording state and update the view."""
@@ -143,7 +142,6 @@ class MainController:
         self.model.clear_data()
 
     def _handle_load_replay(self, filename):
-        print("Hey")
         success = self.model.load_csv(filename)
         if success:
             self.view.status_bar.showMessage(f"Loaded: {filename}", 5000)
@@ -178,7 +176,7 @@ class MainController:
         text = f"Time: {relative_times[closest_idx]:.3f}s\n"
         for ch, values in self.model.get_data().items():
             # Build the hover tool tip text
-            unit = CHANNEL_TYPE_MAP.get(self.model.get_channel_configs()[ch][CHANNEL_TYPE])
+            unit = CHANNEL_TYPE_MAP.get(self.model.get_channel_config_param(ch, CHANNEL_TYPE))
             text += f"{ch}: {values[closest_idx]:.2f} {unit}\n"
 
         # Update tooltip

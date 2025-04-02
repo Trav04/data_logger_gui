@@ -96,27 +96,29 @@ class DataModel:
             timestamp (datetime): The timestamp of the data sample.
             channel_values (list): List of 8 float values, one per channel.
         """
-        if len(channel_values) != 8:
-            raise ValueError("Expected 8 channel values, got {}".format(len(channel_values)))
+        with self._semaphore_channel_live_data:
+            if len(channel_values) != 8:
+                raise ValueError("Expected 8 channel values, got {}".format(len(channel_values)))
 
-        # Format the time
-        timestamp_f = datetime.strptime(timestamp, FORMAT_TIMESTAMP)
+            # Format the time
+            timestamp_f = datetime.strptime(timestamp, FORMAT_TIMESTAMP)
 
-        # Set initial time reference
-        if self.start_time is None:
-            self.start_time = timestamp_f
+            # Set initial time reference
+            if self.start_time is None:
+                self.start_time = timestamp_f
 
-        relative_time = (timestamp_f - self.start_time).total_seconds()
+            relative_time = (timestamp_f - self.start_time).total_seconds()
 
-        # Compute relative time in seconds
-        self.live_relative_times.append(relative_time)
+            # Compute relative time in seconds
+            self.live_relative_times.append(relative_time)
 
-        # Append channel data
-        for i in range(8):
-            self.live_data[i + 1].append(channel_values[i])
+            # Append channel data
+            for i in range(8):
+                self.live_data[i + 1].append(channel_values[i])
 
     def _update_channel_type(self, channel, channel_type):
-        self.channel_configs[channel][CHANNEL_TYPE] = channel_type
+        with self._semaphore_channel_config:
+            self.channel_configs[channel][CHANNEL_TYPE] = channel_type
 
     def load_csv(self, filename):
         """
@@ -185,24 +187,32 @@ class DataModel:
             return False
 
     def get_data(self):
-        if self.live_data is not {channel: [] for channel in range(1, 9)}:
-            return self.live_data
+        with self._semaphore_channel_live_data:
+            if self.live_data is not {channel: [] for channel in range(1, 9)}:
+                return self.live_data
 
     def get_relative_times(self):
         return self.live_relative_times
 
     def get_channel_configs(self):
-        return self.channel_configs
+        """ Return the entire channel configuration dictionary """
+        with self._semaphore_channel_config:
+            return self.channel_configs
+
+    def get_channel_config_param(self, channel, config_param):
+        with self._semaphore_channel_config:
+            return self.channel_configs[channel][config_param]
+
 
     def set_channel_config_param(self, channel, config_param, value):
         with self._semaphore_channel_config:
             self.channel_configs[channel][config_param] = value
 
-
     def clear_data(self):
-        self.live_data = {channel: [] for channel in range(1, 9)}
-        self.live_relative_times = []
-        self.start_time = None
+        with self._semaphore_channel_live_data:
+            self.live_data = {channel: [] for channel in range(1, 9)}
+            self.live_relative_times = []
+            self.start_time = None
 
 
     # def load_csv(self, filename):
