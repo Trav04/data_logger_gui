@@ -11,10 +11,23 @@ from matplotlib.figure import Figure
 
 from model import CHANNEL_TYPE_ACCELERATION, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE_DISABLED, ALARM_TYPE_LIVE, \
     ALARM_TYPE_LATCHED, CURRENT_SOURCE_10UA, CURRENT_SOURCE_200UA, TEMP_SENSOR_THERMISTOR, TEMP_SENSOR_RTD, \
-    V_ALARM_TYPE_DISABLED, V_ALARM_TYPE_LIVE, V_ALARM_TYPE_LATCHED, V_INPUT_RANGE_10V, V_INPUT_RANGE_1V, \
-    V_TEMP_SENSOR_THERMISTOR, V_TEMP_SENSOR_RTD, V_CURRENT_SOURCE_10UA, V_CURRENT_SOURCE_200UA
+    RESISTIVE_TEMP_ENABLED, RESISTIVE_TEMP_DISABLED
+
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_VOLTAGE
+
+V_INPUT_RANGE_10V = "+/-10V"
+V_INPUT_RANGE_1V = "+/-1V"
+
+V_ALARM_TYPE_DISABLED = "Disabled"
+V_ALARM_TYPE_LATCHED = "Latched"
+V_ALARM_TYPE_LIVE = "Live"
+
+V_CURRENT_SOURCE_10UA = "10μA"
+V_CURRENT_SOURCE_200UA = "200μA"
+
+V_TEMP_SENSOR_THERMISTOR = "Thermistor"
+V_TEMP_SENSOR_RTD = "Platinum RTD"
 
 class StatusLED(QLabel):
     def __init__(self):
@@ -255,9 +268,12 @@ class ChannelConfigGroup(QGroupBox):
         elif input_range == V_INPUT_RANGE_1V:
             return INPUT_RANGE_1V
 
-    def get_resistive_temp_mode(self) -> bool:
+    def get_resistive_temp_mode(self) -> int|None:
         """Check if temperature conversion is enabled."""
-        return self.resistive_temp_checkbox.isChecked()
+        if self.resistive_temp_checkbox.isChecked():
+            return RESISTIVE_TEMP_ENABLED
+        else:
+            return RESISTIVE_TEMP_DISABLED
 
     def get_current_source(self) -> int|None:
         """Get the selected current source."""

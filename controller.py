@@ -2,7 +2,7 @@
 from PyQt5.QtCore import QTimer
 import numpy as np
 
-from model import CHANNEL_TYPE_VOLTAGE, INPUT_RANGE, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE, ALARM_OCCURRING, \
+from model import CHANNEL_TYPE_VOLTAGE, INPUT_RANGE, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE, ALARM_STATE, \
     TEMP_ENABLED, CURRENT_SOURCE, SENSOR_TYPE, TEMP_SENSOR_DISABLED, CURRENT_SOURCE_DISABLED
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_ACCELERATION
@@ -89,7 +89,7 @@ class MainController:
         """
         resistive_temp_mode = self.view.config_group.get_resistive_temp_mode()
         if resistive_temp_mode:
-            channel_type = CHANNEL_TYPE_RESISTIVE_TEMPERATURE
+            channel_type = CHANNEL_TYPE_TEMPERATURE
         else:
             channel_type = CHANNEL_TYPE_VOLTAGE
             self.model.set_channel_config_param(channel, CURRENT_SOURCE, TEMP_SENSOR_DISABLED) # Disable current source

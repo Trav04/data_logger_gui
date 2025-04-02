@@ -14,7 +14,6 @@ from controller import MainController
 from model import CHANNEL_TYPE_VOLTAGE
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_ACCELERATION
-from model import CHANNEL_TYPE_RESISTIVE_TEMPERATURE
 
 def main():
     # Create the application

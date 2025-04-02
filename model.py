@@ -11,6 +11,7 @@ CHANNEL_TYPE_RESISTIVE_TEMPERATURE = "Resistive Temperature"
 # CHANNEL_TYPE_ACCELERATION = "Acceleration"
 # CHANNEL_TYPE_TEMPERATURE = "Temperature"
 
+## Hex values for all params
 CHANNEL_TYPE_VOLTAGE = 0x56
 CHANNEL_TYPE_ACCELERATION = 0x41
 CHANNEL_TYPE_TEMPERATURE = 0x54
@@ -30,6 +31,31 @@ CURRENT_SOURCE_10UA = 0x10
 CURRENT_SOURCE_200UA = 0x20
 CURRENT_SOURCE_DISABLED = 0x00
 
+ALARM_OCCURRING = 0x01
+ALARM_NOT_OCCURRING = 0x00
+
+RESISTIVE_TEMP_ENABLED = 0x01
+RESISTIVE_TEMP_DISABLED = 0x00
+
+
+## String values for view for all params
+
+FORMAT_TIMESTAMP = "%Y-%m-%d_%H-%M-%S.%f"
+
+TIMESTAMP = "Timestamp"
+
+
+## Channel CONFIG defines
+CHANNEL_TYPE = 'channel_type'
+ALARM_HIGH = 'alarm_high'
+ALARM_LOW = 'alarm_low'
+INPUT_RANGE = 'input_range'
+ALARM_STATE = 'alarm_state'
+TEMP_ENABLED = 'temp_enabled'
+CURRENT_SOURCE = 'current_source'
+SENSOR_TYPE = 'sensor_type'
+ALARM_TYPE = 'alarm_type'
+
 UNIT_TYPE_MAP = {
     'Volts': CHANNEL_TYPE_VOLTAGE,
     'V': CHANNEL_TYPE_VOLTAGE,
@@ -43,42 +69,6 @@ CHANNEL_TYPE_MAP = {
     CHANNEL_TYPE_ACCELERATION : "m/s^2",
     CHANNEL_TYPE_RESISTIVE_TEMPERATURE : "C"
 }
-
-FORMAT_TIMESTAMP = "%Y-%m-%d_%H-%M-%S.%f"
-
-TIMESTAMP = "Timestamp"
-
-V_INPUT_RANGE_10V = "+/-10V"
-V_INPUT_RANGE_1V = "+/-1V"
-
-V_ALARM_TYPE_DISABLED = "Disabled"
-V_ALARM_TYPE_LATCHED = "Latched"
-V_ALARM_TYPE_LIVE = "Live"
-
-V_CURRENT_SOURCE_10UA = "10μA"
-V_CURRENT_SOURCE_200UA = "200μA"
-
-V_TEMP_SENSOR_THERMISTOR = "Thermistor"
-V_TEMP_SENSOR_RTD = "Platinum RTD"
-
-## Channel CONFIG defines
-CHANNEL_TYPE = 'channel_type'
-ALARM_HIGH = 'alarm_high'
-ALARM_LOW = 'alarm_low'
-INPUT_RANGE = 'input_range'
-ALARM_OCCURRING = 'alarm_state'
-TEMP_ENABLED = 'temp_enabled'
-CURRENT_SOURCE = 'current_source'
-SENSOR_TYPE = 'sensor_type'
-ALARM_TYPE = 'alarm_type'
-
-## SC: Serial Comms values as hex
-
-SC_ALARM_OCCURRING = 0x01
-SC_ALARM_NOT_OCCURRING = 0x00
-
-SC_RESISTIVE_TEMP_ENABLED = 0x01
-SC_RESISTIVE_TEMP_DISABLED = 0x00
 
 
 
@@ -112,8 +102,8 @@ class DataModel:
                 ALARM_LOW: 0,
                 INPUT_RANGE: INPUT_RANGE_10V,  # Default to +/-10V
                 ALARM_TYPE: ALARM_TYPE_DISABLED,  # Default to disabled
-                ALARM_OCCURRING: True,  # Default OFF
-                TEMP_ENABLED: False,  # Default not resistive temperature mode
+                ALARM_STATE: ALARM_NOT_OCCURRING,  # Default OFF
+                TEMP_ENABLED: RESISTIVE_TEMP_DISABLED,  # Default not resistive temperature mode
                 CURRENT_SOURCE: CURRENT_SOURCE_10UA if channel_type == CHANNEL_TYPE_RESISTIVE_TEMPERATURE else 0, # 0 represents None for better C compatibility
                 SENSOR_TYPE: TEMP_SENSOR_THERMISTOR if channel_type == CHANNEL_TYPE_RESISTIVE_TEMPERATURE else 0 # 0 represents None for better C compatibility
             }
