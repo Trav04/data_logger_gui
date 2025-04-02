@@ -76,7 +76,6 @@ class MainController:
         """ Update the resistive temp sensor type """
         sensor = self.view.config_group.get_resistive_sensor_type()
         self.model.set_channel_config_param(channel, SENSOR_TYPE, sensor)
-        print(self.model.get_channel_configs())
 
     def _handle_current_source_changed(self, channel):
         """Update current source used by the resistive temperature channel """
