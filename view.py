@@ -196,7 +196,7 @@ class ChannelConfigGroup(QGroupBox):
         self.alarm_type_combo.currentTextChanged.connect(self._emit_alarm_type_changed)
         self.resistive_temp_checkbox.toggled.connect(self._emit_resistive_temp_mode_changed)
         self.current_source_combo.currentTextChanged.connect(self._emit_current_source_changed)
-        # self.sensor_type_combo.currentTextChanged.connect(self._emit_config_changed)
+        self.sensor_type_combo.currentTextChanged.connect(self._emit_resistive_temp_sensor_changed)
 
     def _emit_alarm_type_changed(self):
         channel = int(self.get_selected_channel())
@@ -228,6 +228,11 @@ class ChannelConfigGroup(QGroupBox):
         if channel:
             self.current_source_changed.emit(channel)
 
+    def _emit_resistive_temp_sensor_changed(self):
+        channel = int(self.get_selected_channel())
+        if channel:
+            self.resistive_sensor_type_changed.emit(channel)
+
     def get_selected_channel(self) -> str:
         """Get the currently selected channel name."""
         return self.channel_combo.currentText()
@@ -252,7 +257,7 @@ class ChannelConfigGroup(QGroupBox):
         """Get the selected current source."""
         return self.current_source_combo.currentText()
 
-    def get_sensor_type(self) -> str:
+    def get_resistive_sensor_type(self) -> str:
         """Get the selected sensor type."""
         return self.sensor_type_combo.currentText()
 

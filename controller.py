@@ -61,6 +61,7 @@ class MainController:
         self.view.config_group.alarm_type_changed.connect(self._handle_alarm_type_changed)
         self.view.config_group.resistive_temp_mode_changed.connect(self._handle_resistive_temp_mode_changed)
         self.view.config_group.current_source_changed.connect(self._handle_current_source_changed)
+        self.view.config_group.resistive_sensor_type_changed.connect(self._handle_resistive_temp_sensor_changed)
 
     ## TODO Update the channel config in the model, update the entire structure for that channel each time a param changes
     def _handle_channel_changed(self, channel: int):
@@ -70,6 +71,13 @@ class MainController:
         # # Set the corresponding alarm state for this channel
         # self.view.config_group.set_alarm_occurring(status)
         # TODO A thread will update the current channel status
+
+    def _handle_resistive_temp_sensor_changed(self, channel):
+        """ Update the resistive temp sensor type """
+        sensor = self.view.config_group.get_resistive_sensor_type()
+        self.model.set_channel_config_param(channel, SENSOR_TYPE, sensor)
+        print(self.model.get_channel_configs())
+
     def _handle_current_source_changed(self, channel):
         """Update current source used by the resistive temperature channel """
         current_source = self.view.config_group.get_current_source()
@@ -92,7 +100,6 @@ class MainController:
         self.model.set_channel_config_param(channel, CHANNEL_TYPE, channel_type)
         # Update resistive temp mode
         self.model.set_channel_config_param(channel, TEMP_ENABLED, resistive_temp_mode)
-        print(self.model.get_channel_configs())
 
     def _handle_alarm_type_changed(self, channel):
         """Update alarm type for a channel."""

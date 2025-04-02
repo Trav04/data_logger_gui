@@ -53,7 +53,6 @@ CURRENT_SOURCE = 'current_source'
 SENSOR_TYPE = 'sensor_type'
 ALARM_TYPE = 'alarm_type'
 
-
 ## SC: Serial Comms values as hex
 SC_CHANNEL_TYPE_VOLTAGE = 0x56
 SC_CHANNEL_TYPE_ACCELEROMETER = 0x41
