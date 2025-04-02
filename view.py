@@ -195,7 +195,7 @@ class ChannelConfigGroup(QGroupBox):
         self.input_range_combo.currentTextChanged.connect(self._emit_input_range_changed)
         self.alarm_type_combo.currentTextChanged.connect(self._emit_alarm_type_changed)
         self.resistive_temp_checkbox.toggled.connect(self._emit_resistive_temp_mode_changed)
-        # self.current_source_combo.currentTextChanged.connect(self._emit_config_changed)
+        self.current_source_combo.currentTextChanged.connect(self._emit_current_source_changed)
         # self.sensor_type_combo.currentTextChanged.connect(self._emit_config_changed)
 
     def _emit_alarm_type_changed(self):
@@ -222,6 +222,11 @@ class ChannelConfigGroup(QGroupBox):
         channel = int(self.get_selected_channel())
         if channel:
             self.resistive_temp_mode_changed.emit(channel)
+
+    def _emit_current_source_changed(self):
+        channel = int(self.get_selected_channel())
+        if channel:
+            self.current_source_changed.emit(channel)
 
     def get_selected_channel(self) -> str:
         """Get the currently selected channel name."""

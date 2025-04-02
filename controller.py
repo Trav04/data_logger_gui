@@ -3,7 +3,7 @@ from PyQt5.QtCore import QTimer
 import numpy as np
 
 from model import CHANNEL_TYPE_VOLTAGE, INPUT_RANGE, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE, ALARM_OCCURRING, \
-    TEMP_ENABLED
+    TEMP_ENABLED, CURRENT_SOURCE
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_ACCELERATION
 from model import CHANNEL_TYPE_RESISTIVE_TEMPERATURE
@@ -60,6 +60,7 @@ class MainController:
         self.view.config_group.input_range_changed.connect(self._handle_input_range_changed)
         self.view.config_group.alarm_type_changed.connect(self._handle_alarm_type_changed)
         self.view.config_group.resistive_temp_mode_changed.connect(self._handle_resistive_temp_mode_changed)
+        self.view.config_group.current_source_changed.connect(self._handle_current_source_changed)
 
     ## TODO Update the channel config in the model, update the entire structure for that channel each time a param changes
     def _handle_channel_changed(self, channel: int):
@@ -69,9 +70,17 @@ class MainController:
         # # Set the corresponding alarm state for this channel
         # self.view.config_group.set_alarm_occurring(status)
         # TODO A thread will update the current channel status
+    def _handle_current_source_changed(self, channel):
+        """Update current source used by the resistive temperature channel """
+        current_source = self.view.config_group.get_current_source()
+        self.model.set_channel_config_param(channel, CURRENT_SOURCE, current_source)
+        print(self.model.get_channel_configs())
 
     def _handle_resistive_temp_mode_changed(self, channel):
-        """Update resistive temperature mode for a channel."""
+        """
+        Update resistive temperature mode for a channel. If resistive mode is checked, set the channel to resistive
+        temperature mode, otherwise set the channel back to voltage. Change the channel type and the temp_enabled param
+        """
         resistive_temp_mode = self.view.config_group.get_resistive_temp_mode()
         if resistive_temp_mode:
             channel_type = CHANNEL_TYPE_RESISTIVE_TEMPERATURE
@@ -79,7 +88,6 @@ class MainController:
             channel_type = CHANNEL_TYPE_VOLTAGE
         self.model.set_channel_config_param(channel, CHANNEL_TYPE, channel_type)
         self.model.set_channel_config_param(channel, TEMP_ENABLED, resistive_temp_mode)
-        print(self.model.get_channel_configs())
 
     def _handle_alarm_type_changed(self, channel):
         """Update alarm type for a channel."""
