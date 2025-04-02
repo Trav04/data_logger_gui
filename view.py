@@ -10,7 +10,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
 from model import CHANNEL_TYPE_ACCELERATION, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE_DISABLED, ALARM_TYPE_LIVE, \
-    ALARM_TYPE_LATCHED
+    ALARM_TYPE_LATCHED, CURRENT_SOURCE_10UA, CURRENT_SOURCE_200UA, TEMP_SENSOR_THERMISTOR, TEMP_SENSOR_RTD
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_VOLTAGE
 
@@ -144,7 +144,7 @@ class ChannelConfigGroup(QGroupBox):
         self.input_range_combo = QComboBox()
         self.alarm_type_combo = QComboBox()
         self.alarm_occurring_led = StatusLED()
-        self.temp_enable_check = QCheckBox("Enable Temperature")
+        self.resistive_temp_checkbox = QCheckBox("Enable Temperature")
         self.current_source_combo = QComboBox()
         self.sensor_type_combo = QComboBox()
 
@@ -173,13 +173,13 @@ class ChannelConfigGroup(QGroupBox):
         layout.addRow(QLabel("Alarm Occurring (YES/NO):"), self.alarm_occurring_led)
 
         # Temperature Conversion
-        self.temp_enable_check.toggled.connect(self._toggle_temp_config)
-        self.current_source_combo.addItems(['10μA', '200μA'])
-        self.sensor_type_combo.addItems(['Thermistor', 'Platinum RTD'])
+        self.resistive_temp_checkbox.toggled.connect(self._toggle_temp_config)
+        self.current_source_combo.addItems([CURRENT_SOURCE_10UA, CURRENT_SOURCE_200UA])
+        self.sensor_type_combo.addItems([TEMP_SENSOR_THERMISTOR, TEMP_SENSOR_RTD])
         temp_layout = QHBoxLayout()
         temp_layout.addWidget(self.current_source_combo)
         temp_layout.addWidget(self.sensor_type_combo)
-        layout.addRow(self.temp_enable_check, temp_layout)
+        layout.addRow(self.resistive_temp_checkbox, temp_layout)
 
         self.setLayout(layout)
 
@@ -194,7 +194,7 @@ class ChannelConfigGroup(QGroupBox):
         self.alarm_low_spin.valueChanged.connect(self._emit_alarms_changed)
         self.input_range_combo.currentTextChanged.connect(self._emit_input_range_changed)
         self.alarm_type_combo.currentTextChanged.connect(self._emit_alarm_type_changed)
-        # self.temp_enable_check.toggled.connect(self._emit_config_changed)
+        self.resistive_temp_checkbox.toggled.connect(self._emit_resistive_temp_mode_changed)
         # self.current_source_combo.currentTextChanged.connect(self._emit_config_changed)
         # self.sensor_type_combo.currentTextChanged.connect(self._emit_config_changed)
 
@@ -218,6 +218,11 @@ class ChannelConfigGroup(QGroupBox):
         if channel:
             self.selected_channel_changed.emit(channel)
 
+    def _emit_resistive_temp_mode_changed(self):
+        channel = int(self.get_selected_channel())
+        if channel:
+            self.resistive_temp_mode_changed.emit(channel)
+
     def get_selected_channel(self) -> str:
         """Get the currently selected channel name."""
         return self.channel_combo.currentText()
@@ -234,9 +239,9 @@ class ChannelConfigGroup(QGroupBox):
         """Get the selected input range."""
         return self.input_range_combo.currentText()
 
-    def get_temp_enabled(self) -> bool:
+    def get_resistive_temp_mode(self) -> bool:
         """Check if temperature conversion is enabled."""
-        return self.temp_enable_check.isChecked()
+        return self.resistive_temp_checkbox.isChecked()
 
     def get_current_source(self) -> str:
         """Get the selected current source."""

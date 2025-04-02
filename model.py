@@ -194,7 +194,7 @@ class DataModel:
     def get_relative_times(self):
         return self.live_relative_times
 
-    def get_channel_configs(self):
+    def get_channel_configs(self) -> dict:
         """ Return the entire channel configuration dictionary """
         with self._semaphore_channel_config:
             return self.channel_configs
