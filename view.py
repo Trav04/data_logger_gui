@@ -191,6 +191,8 @@ class ChannelConfigGroup(QGroupBox):
         self.resistive_temp_checkbox.toggled.connect(self._toggle_temp_config)
         self.current_source_combo.addItems([V_CURRENT_SOURCE_10UA, V_CURRENT_SOURCE_200UA])
         self.sensor_type_combo.addItems([V_TEMP_SENSOR_THERMISTOR, V_TEMP_SENSOR_RTD])
+        self.current_source_combo.setVisible(False)  # By default not shown
+        self.sensor_type_combo.setVisible(False)  # By default not shown
         temp_layout = QHBoxLayout()
         temp_layout.addWidget(self.current_source_combo)
         temp_layout.addWidget(self.sensor_type_combo)
