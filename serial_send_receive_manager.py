@@ -9,25 +9,24 @@ from serial_manager import SerialManager
 
 class SerialSendReceiveManager(SerialManager):
     """ Class that handles the receiving of data """
-    HEARTBEAT = 0x06
-    RTC_TIME = 0x01
-    CHANNEL_LIVE_DATA = 0x02
-    CHANNEL_CONFIG = 0x03
-    OPTIC_CONNECTION = 0x04
-    DEVICE_RECORDING_STATE = 0x05
+    STRUCT_ID_HEARTBEAT = 0x06
+    STRUCT_ID_RTC_TIME = 0x01
+    STRUCT_ID_CHANNEL_LIVE_DATA = 0x02
+    STRUCT_ID_CHANNEL_CONFIG = 0x03
+    STRUCT_ID_OPTIC_CONNECTION = 0x04
+    STRUCT_ID_DEVICE_RECORDING_STATE = 0x05
 
     ACKNOWLEDGEMENT_PREFIX = ";A"
 
-    HEARTBEAT_BEAT = 0x06  # Heartbeat signal
-    RTC_ID = 0x01
+    HEARTBEAT_BEAT_VALUE = 0x06
 
     STRUCT_FORMATS = {
-        HEARTBEAT: "B",  # uint8_t beat = 0x06
-        RTC_TIME: "B H 5B",  # struct_id (uint8), year (uint16), month, day, hour, min, sec (5x uint8)
-        CHANNEL_LIVE_DATA: "B B H 5B 8B",  # struct_id (uint8), rtc_struct, 8x uint8 channels
-        CHANNEL_CONFIG: "B 9B",  # struct_id (uint8), 7x uint8_t values # NOTE: Ethan has changed this.
-        OPTIC_CONNECTION: "B B",  # struct_id (uint8), recording_state (uint8)
-        DEVICE_RECORDING_STATE: "B B"  # struct_id (uint8), optic_state (uint8)
+        STRUCT_ID_HEARTBEAT: "B",  # uint8_t beat = 0x00                                                          # SEND TO Control Unit
+        STRUCT_ID_RTC_TIME: "B H 5B",  # struct_id (uint8), year (uint16), month, day, hour, min, sec (5x uint8)  # SEND to Control Unit
+        STRUCT_ID_CHANNEL_LIVE_DATA: "B B H 5B 8H",  # struct_id (uint8), rtc_struct, 8x uint16 channels          # Receive from Control Unit
+        STRUCT_ID_OPTIC_CONNECTION: "B B",  # struct_id (uint8), recording_state (uint8)                          # Receive from Control Unit
+        STRUCT_ID_CHANNEL_CONFIG: "B 8B",  # struct_id (uint8), 7x uint8_t values                                 # Send & Receive from Control Unit
+        STRUCT_ID_DEVICE_RECORDING_STATE: "B B"  # struct_id (uint8), optic_state (uint8)                         # Send & Receive from Control Unit
     }
 
     def __init__(self):
@@ -50,6 +49,14 @@ class SerialSendReceiveManager(SerialManager):
         fmt = self.STRUCT_FORMATS[struct_id]
         try:
             packed_data = struct.pack(fmt, *args)
+
+            # Pad data
+            if len(packed_data) < 7:
+                padding = b'\x3B' * (7 - len(packed_data))  # Pad with null bytes
+                packed_data += padding
+                packed_data += b'\r\n'
+            print(f"Sending {struct_id}: {packed_data}")
+
             with self.lock:
                 if self._ser and self._ser.is_open:
                     self._ser.write(packed_data)
@@ -68,7 +75,7 @@ class SerialSendReceiveManager(SerialManager):
             self._close()
             return False
 
-    def _send_struct_ack_wait(self, struct_id, *args, ack_timeout=2.0) -> bool:
+    def send_struct_ack_wait(self, struct_id, *args, ack_timeout=2.0) -> bool:
         """
         Send a struct and await an acknowledgement back
         :param struct_id: the ID of the struct to be sent
@@ -132,7 +139,7 @@ class SerialSendReceiveManager(SerialManager):
             self._ser.write(ack_packet)
 
     def _send_heartbeat(self):
-        self._send_struct(self.HEARTBEAT, self.HEARTBEAT_BEAT)
+        self._send_struct(self.STRUCT_ID_HEARTBEAT, self.HEARTBEAT_BEAT_VALUE)
 
     def start_heartbeat(self):
         """ Starts the heart beat thread to periodically send heart beat signals to the device"""
@@ -146,8 +153,20 @@ class SerialSendReceiveManager(SerialManager):
     def _parse_channel_live_data(self, unpacked_data: tuple):
         print("Channel Live Data Received:", unpacked_data)
 
+    def _parse_device_recording_state(self, unpacked_data: tuple):
+        print("Recording State Received:", unpacked_data)
+
+    def _parse_optic_connection(self, unpacked_data: tuple):
+        print("Optic channel Data Received:", unpacked_data)
+
+    def _parse_channel_config(self, unpacked_data: tuple):
+        print("Channel Config Received:", unpacked_data)
+
     STRUCT_PARSERS = {
         0x01: _parse_channel_live_data,
+        0x02: _parse_channel_config,
+        0x03: _parse_device_recording_state,
+        0x04: _parse_optic_connection,
     }
 
     def _receive_structs(self):

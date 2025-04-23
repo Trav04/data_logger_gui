@@ -1,6 +1,7 @@
 # controller.py
 from PyQt5.QtCore import QTimer
 import numpy as np
+from datetime import datetime
 
 from model import CHANNEL_TYPE_VOLTAGE, INPUT_RANGE, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE, ALARM_STATE, \
     TEMP_ENABLED, CURRENT_SOURCE, SENSOR_TYPE, TEMP_SENSOR_DISABLED, CURRENT_SOURCE_DISABLED, ALARM_TYPE_LIVE, \
@@ -13,6 +14,7 @@ from model import CHANNEL_TYPE_MAP
 
 from model import ALARM_HIGH
 from model import ALARM_LOW
+from serial_send_receive_manager import SerialSendReceiveManager
 
 FAKE_DATA = [
     ("2025-03-08_12-30-15.123", [3.45, 2.78, 25.6, 4.12, 0.12, -0.05, 0.08, 26.0]),
@@ -35,6 +37,9 @@ class MainController:
         self.view = view
         self.current_max_points = 1000  # Track max points in controller (User input)
 
+        # Initialise Serial Manager
+        self.serial = SerialSendReceiveManager()
+
         self._recording_state = 0
         self._optical_state = 0
 
@@ -43,6 +48,10 @@ class MainController:
         self._connect_signals()
         self._init_timer()
         self._init_channel_configs()  # Add initialised channels to the drop down menu
+
+        # Initialise heartbeat to MCU
+        # self.serial.start_heartbeat()
+
 
     def _init_channel_configs(self):
         channel_configs = self.model.get_channel_configs()
@@ -77,6 +86,19 @@ class MainController:
 
     def _handle_rtc_sync(self):
         print("Synced rtc time")
+        # TODO Send RTC Struct
+        now = datetime.now()
+        success = self.serial.send_struct_ack_wait(
+            self.serial.STRUCT_ID_RTC_TIME,
+            self.serial.STRUCT_ID_RTC_TIME,
+            now.year,
+            now.month,
+            now.day,
+            now.hour,
+            now.minute,
+            now.second
+        )
+
 
     def _handle_toggle_recording(self):
         """Toggle recording state and update the view."""
@@ -87,12 +109,15 @@ class MainController:
         self._init_fake_data()
 
     def _check_and_update_alarms(self):
-        """Check if alarms are occuring and update the channel configs accordingly."""
+        """
+        Check if alarms are occuring and update the channel configs accordingly.
+            # Check alarm state
+                # If Live -> set/reset every sample
+                # If Latched -> once set, never reset.
+                # If disabled -> reset all LEDs
+        """
         # Get channel config
-        # Check alarm state
-            # If Live -> set/reset every sample
-            # If Latched -> once set, never reset.
-            # If disabled -> reset all LEDs
+
         # Get channel data
         # Compare channel data to bounds of alarm high and alarm low
         # Set alarm status accordingly after comparison
@@ -282,7 +307,6 @@ class MainController:
 
     def update_plot(self):
         """Update plots with truncated data based on current_max_points."""
-        print(self.model.get_channel_configs())
         plot_data = self.model.get_data()
         if plot_data:
             # Truncate data to current_max_points

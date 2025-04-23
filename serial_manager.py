@@ -9,7 +9,7 @@ import time
 
 class SerialManager:
 
-    def __init__(self, port='COM7', baudrate=115200): # Was 10 for Travis' computer.
+    def __init__(self, port='COM10', baudrate=115200): # Was 10 for Travis' computer.
         self._port = port
         self._baudrate = baudrate
         self._ser = None

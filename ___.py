@@ -16,12 +16,12 @@ class SerialManager:
     HEARTBEAT_BEAT = 0x06
 
     STRUCT_FORMATS = {
-        HEARTBEAT: "B",  # uint8_t beat = 0x00
-        RTC_TIME: "B H 5B",  # struct_id (uint8), year (uint16), month, day, hour, min, sec (5x uint8)
-        CHANNEL_LIVE_DATA: "B B H 5B 8B",  # struct_id (uint8), rtc_struct, 8x uint8 channels
-        CHANNEL_CONFIG: "B 7B",  # struct_id (uint8), 7x uint8_t values
-        OPTIC_CONNECTION: "B B",  # struct_id (uint8), recording_state (uint8)
-        DEVICE_RECORDING_STATE: "B B"  # struct_id (uint8), optic_state (uint8)
+        HEARTBEAT: "B",  # uint8_t beat = 0x00                                                          # SEND TO Control Unit
+        RTC_TIME: "B H 5B",  # struct_id (uint8), year (uint16), month, day, hour, min, sec (5x uint8)  # SEND to Control Unit
+        CHANNEL_LIVE_DATA: "B B H 5B 8H",  # struct_id (uint8), rtc_struct, 8x uint16 channels            # Receive from Control Unit
+        OPTIC_CONNECTION: "B B",  # struct_id (uint8), recording_state (uint8)                          # Receive from Control Unit
+        CHANNEL_CONFIG: "B 8B",  # struct_id (uint8), 7x uint8_t values                                 # Send & Receive from Control Unit
+        DEVICE_RECORDING_STATE: "B B"  # struct_id (uint8), optic_state (uint8)                         # Send & Receive from Control Unit
     }
 
     def __init__(self, port='COM10', baudrate=115200):
