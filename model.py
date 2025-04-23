@@ -7,7 +7,6 @@ from pprint import pprint
 import numpy as np
 
 # CHANNEL_TYPE_VOLTAGE = "Voltage"
-CHANNEL_TYPE_RESISTIVE_TEMPERATURE = "Resistive Temperature"
 # CHANNEL_TYPE_ACCELERATION = "Acceleration"
 # CHANNEL_TYPE_TEMPERATURE = "Temperature"
 
@@ -37,13 +36,11 @@ ALARM_NOT_OCCURRING = 0x00
 RESISTIVE_TEMP_ENABLED = 0x01
 RESISTIVE_TEMP_DISABLED = 0x00
 
-
 ## String values for view for all params
 
 FORMAT_TIMESTAMP = "%Y-%m-%d_%H-%M-%S.%f"
 
 TIMESTAMP = "Timestamp"
-
 
 ## Channel CONFIG defines
 CHANNEL_TYPE = 'channel_type'
@@ -67,10 +64,7 @@ CHANNEL_TYPE_MAP = {
     CHANNEL_TYPE_VOLTAGE : "V",
     CHANNEL_TYPE_TEMPERATURE : "C",
     CHANNEL_TYPE_ACCELERATION : "m/s^2",
-    CHANNEL_TYPE_RESISTIVE_TEMPERATURE : "C"
 }
-
-
 
 class DataModel:
     def __init__(self):
@@ -104,8 +98,8 @@ class DataModel:
                 ALARM_TYPE: ALARM_TYPE_DISABLED,  # Default to disabled
                 ALARM_STATE: ALARM_NOT_OCCURRING,  # Default OFF
                 TEMP_ENABLED: RESISTIVE_TEMP_DISABLED,  # Default not resistive temperature mode
-                CURRENT_SOURCE: CURRENT_SOURCE_10UA if channel_type == CHANNEL_TYPE_RESISTIVE_TEMPERATURE else 0, # 0 represents None for better C compatibility
-                SENSOR_TYPE: TEMP_SENSOR_THERMISTOR if channel_type == CHANNEL_TYPE_RESISTIVE_TEMPERATURE else 0 # 0 represents None for better C compatibility
+                CURRENT_SOURCE: CURRENT_SOURCE_10UA if channel_type == CHANNEL_TYPE_TEMPERATURE else 0, # 0 represents None for better C compatibility
+                SENSOR_TYPE: TEMP_SENSOR_THERMISTOR if channel_type == CHANNEL_TYPE_TEMPERATURE else 0 # 0 represents None for better C compatibility
             }
 
     def store_live_data(self, timestamp, channel_values):

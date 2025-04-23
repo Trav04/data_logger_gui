@@ -310,6 +310,19 @@ class ChannelConfigGroup(QGroupBox):
     def set_alarm_occurring(self, status: bool):
         self.alarm_occurring_led.set_status(status)
 
+    def update_channel_config_group(self, channel, alarm_high, alarm_low, input_range, alarm_type, alarm_occurring,
+                                    resistive_temp_enabled, resistive_temp_sensor_type, current_source, sensor_type):
+        self.channel_combo.setCurrentText(channel)
+        self.alarm_high_spin.setValue(alarm_high)
+        self.alarm_low_spin.setValue(alarm_low)
+        self.input_range_combo.setCurrentText(input_range)
+        self.alarm_type_combo.setCurrentText(alarm_type)
+        self.alarm_occurring_led.set_status(alarm_occurring)
+        self.resistive_temp_checkbox.setChecked(resistive_temp_enabled)
+        self.sensor_type_combo.setCurrentText(resistive_temp_sensor_type)
+        self.current_source_combo.setCurrentText(current_source)
+        self.sensor_type_combo.setCurrentText(sensor_type)
+
 class MainWindowView(QMainWindow):
     load_replay = pyqtSignal(str)
     max_points = pyqtSignal(int)
