@@ -30,6 +30,12 @@ class SerialSendReceiveManager(SerialManager):
     }
 
     def __init__(self):
+        self.STRUCT_PARSERS = {
+            0x02: self._parse_channel_live_data,
+            0x03: self._parse_channel_config,
+            0x04: self._parse_optic_connection,
+            0x05: self._parse_device_recording_state
+        }
         super().__init__()
         self._start_receive_struct_thread()
 
@@ -162,13 +168,6 @@ class SerialSendReceiveManager(SerialManager):
     def _parse_channel_config(self, unpacked_data: tuple):
         print("Channel Config Received:", unpacked_data)
 
-    STRUCT_PARSERS = {
-        0x01: _parse_channel_live_data,
-        0x02: _parse_channel_config,
-        0x03: _parse_device_recording_state,
-        0x04: _parse_optic_connection,
-    }
-
     def _receive_structs(self):
         """ Start a thread for receiving structs """
         while True:
@@ -186,20 +185,22 @@ class SerialSendReceiveManager(SerialManager):
                         self._send_acknowledgement_packet(struct_id)
 
                         struct_format = self.STRUCT_FORMATS[struct_id]
-                        struct_size = struct.calcsize(struct_format)
+                        struct_size = struct.calcsize(struct_format)  # size includes the struct id
 
                         struct_data = self._ser.read(struct_size - 1)  # -1 as struct ID (1 byte) already read
                         print("Struct ID", struct_id)
                         print("Struct Data", struct_data)
-                        if len(struct_data) != struct_size - 1:
+
+                        if len(struct_data) != (struct_size - 1):
                             print("RECEIVE ERROR: Incomplete data received!")
                             continue  # Fail gracefully and skip this data
 
                         # Unpack the data into a tuple (excluding the struct_id)
-                        unpacked_data = struct.unpack(struct_format, struct_data)
+                        unpacked_data = struct.unpack(struct_format, bytes([struct_id]) + struct_data)
 
                         # Parse data
                         self.STRUCT_PARSERS[struct_id](unpacked_data)
+
                     else:
                         time.sleep(0.01)  # Short sleep to prevent CPU spinning
                 else:
