@@ -258,9 +258,15 @@ class ChannelConfigGroup(QGroupBox):
         """Get the current alarm high value."""
         return self.alarm_high_spin.value()
 
+    def set_alarm_high(self, high: int):
+        self.alarm_high_spin.setValue(high)
+
     def get_alarm_low(self) -> int:
         """Get the current alarm low value."""
         return self.alarm_low_spin.value()
+
+    def set_alarm_low(self, low: int):
+        self.alarm_low_spin.setValue(low)
 
     def get_input_range(self) -> int|None:
         """Get the selected input range."""
@@ -269,6 +275,12 @@ class ChannelConfigGroup(QGroupBox):
             return INPUT_RANGE_10V
         elif input_range == V_INPUT_RANGE_1V:
             return INPUT_RANGE_1V
+
+    def set_input_range(self, input_range: int):
+        if input_range == INPUT_RANGE_10V:
+            self.input_range_combo.setCurrentText(V_INPUT_RANGE_10V)
+        elif input_range == INPUT_RANGE_1V:
+            self.input_range_combo.setCurrentText(V_INPUT_RANGE_1V)
 
     def get_resistive_temp_mode(self) -> int|None:
         """Check if temperature conversion is enabled."""
@@ -285,6 +297,12 @@ class ChannelConfigGroup(QGroupBox):
         elif cs == V_CURRENT_SOURCE_10UA:
             return CURRENT_SOURCE_10UA
 
+    def set_current_source(self, current_source: int):
+        if current_source == CURRENT_SOURCE_200UA:
+            self.current_source_combo.setCurrentText(V_CURRENT_SOURCE_200UA)
+        elif current_source == CURRENT_SOURCE_10UA:
+            self.current_source_combo.setCurrentText(V_CURRENT_SOURCE_10UA)
+
     def get_resistive_sensor_type(self) -> int|None:
         """Get the selected sensor type."""
         sensor = self.sensor_type_combo.currentText()
@@ -292,6 +310,13 @@ class ChannelConfigGroup(QGroupBox):
             return TEMP_SENSOR_THERMISTOR
         elif sensor == V_TEMP_SENSOR_RTD:
             return TEMP_SENSOR_RTD
+
+    def set_resistive_temp_sensor(self, rts: int):
+        if rts == TEMP_SENSOR_THERMISTOR:
+            self.sensor_type_combo.setCurrentText(V_TEMP_SENSOR_THERMISTOR)
+        elif rts == TEMP_SENSOR_RTD:
+            self.sensor_type_combo.setCurrentText(V_TEMP_SENSOR_RTD)
+
 
     def get_alarm_type(self) -> int|None:
         """Get the selected alarm type."""
@@ -302,6 +327,16 @@ class ChannelConfigGroup(QGroupBox):
             return ALARM_TYPE_LATCHED
         elif alarm_type == V_ALARM_TYPE_LIVE:
             return ALARM_TYPE_LIVE
+
+    def set_alarm_type(self, alarm_type: int):
+        if alarm_type == ALARM_TYPE_DISABLED:
+            self.alarm_type_combo.setCurrentText(V_ALARM_TYPE_DISABLED)
+        elif alarm_type == ALARM_TYPE_LATCHED:
+            self.alarm_type_combo.setCurrentText(V_ALARM_TYPE_LATCHED)
+        elif alarm_type == ALARM_TYPE_LIVE:
+            self.alarm_type_combo.setCurrentText(V_ALARM_TYPE_LIVE)
+
+
 
     def set_channel_drop_down_item(self, channel):
         """ Add a single string to the ch drop down list """
@@ -314,19 +349,6 @@ class ChannelConfigGroup(QGroupBox):
             self.alarm_occurring_led.set_status(False)
         else:
             self.alarm_occurring_led.set_status(status)
-
-    def update_channel_config_group(self, channel, alarm_high, alarm_low, input_range, alarm_type, alarm_occurring,
-                                    resistive_temp_enabled, resistive_temp_sensor_type, current_source, sensor_type):
-        self.channel_combo.setCurrentText(channel)
-        self.alarm_high_spin.setValue(alarm_high)
-        self.alarm_low_spin.setValue(alarm_low)
-        self.input_range_combo.setCurrentText(input_range)
-        self.alarm_type_combo.setCurrentText(alarm_type)
-        self.alarm_occurring_led.set_status(alarm_occurring)
-        self.resistive_temp_checkbox.setChecked(resistive_temp_enabled)
-        self.sensor_type_combo.setCurrentText(resistive_temp_sensor_type)
-        self.current_source_combo.setCurrentText(current_source)
-        self.sensor_type_combo.setCurrentText(sensor_type)
 
 class MainWindowView(QMainWindow):
     load_replay = pyqtSignal(str)
@@ -571,5 +593,15 @@ class MainWindowView(QMainWindow):
         self.system_time_label.setText(time.strftime('%H:%M:%S'))
         self.sync_rtc.emit(None)
 
-    # def update_rtc_time(self):
-    #
+    def update_channel_config_group(self, channel, alarm_high, alarm_low, input_range, alarm_type, alarm_state,
+                                    resistive_temp_enabled, resistive_temp_sensor_type, current_source):
+        self.config_group.set_alarm_low(alarm_low)
+        self.config_group.set_alarm_high(alarm_high)
+        self.config_group.set_input_range(input_range)
+
+        self.config_group.set_alarm_type(alarm_type)
+        # ## self.config_group.alarm_occurring_led.set_status(alarm_state)
+        self.config_group.resistive_temp_checkbox.setChecked(resistive_temp_enabled)
+        self.config_group.set_resistive_temp_sensor(resistive_temp_sensor_type)
+        self.config_group.set_current_source(current_source)
+        # self.config_group.sensor_type_combo.setCurrentText(sensor_type)

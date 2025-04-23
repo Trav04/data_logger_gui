@@ -5,7 +5,7 @@ from datetime import datetime
 
 from model import CHANNEL_TYPE_VOLTAGE, INPUT_RANGE, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE, ALARM_STATE, \
     TEMP_ENABLED, CURRENT_SOURCE, SENSOR_TYPE, TEMP_SENSOR_DISABLED, CURRENT_SOURCE_DISABLED, ALARM_TYPE_LIVE, \
-    ALARM_TYPE_LATCHED, ALARM_TYPE_DISABLED, ALARM_OCCURRING, ALARM_NOT_OCCURRING
+    ALARM_TYPE_LATCHED, ALARM_TYPE_DISABLED, ALARM_OCCURRING, ALARM_NOT_OCCURRING, RESISTIVE_TEMP_ENABLED
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_ACCELERATION
 
@@ -50,7 +50,7 @@ class MainController:
         self._init_channel_configs()  # Add initialised channels to the drop down menu
 
         # Initialise heartbeat to MCU
-        # self.serial.start_heartbeat()
+        self.serial.start_heartbeat()
 
 
     def _init_channel_configs(self):
@@ -161,12 +161,23 @@ class MainController:
         # # Set the corresponding alarm state for this channel
         # self.view.config_group.set_alarm_occurring(status)
         self._current_channel = channel
-        self._handle_alarms_changed(channel)
-        self._handle_input_range_changed(channel)
-        self._handle_alarm_type_changed(channel)
-        self._handle_resistive_temp_mode_changed(channel)
-        self._handle_current_source_changed(channel)
-        self._handle_resistive_temp_sensor_changed(channel)
+        alarm_high = self.model.get_channel_config_param(channel, ALARM_HIGH)
+        alarm_low = self.model.get_channel_config_param(channel, ALARM_LOW)
+        input_range = self.model.get_channel_config_param(channel, INPUT_RANGE)
+        alarm_type = self.model.get_channel_config_param(channel, ALARM_TYPE)
+        # alarm_occurring = self.model.get_channel_config_param(channel, ALARM_STATE)
+        resistive_temp_enabled = self.model.get_channel_config_param(channel, TEMP_ENABLED)
+        resistive_temp_sensor_type = self.model.get_channel_config_param(channel, SENSOR_TYPE)
+        current_source = self.model.get_channel_config_param(channel, CURRENT_SOURCE)
+
+        self.view.update_channel_config_group(channel, alarm_high, alarm_low, input_range, alarm_type, 1, resistive_temp_enabled, resistive_temp_sensor_type, current_source)
+
+        # self._handle_alarms_changed(channel)
+        # self._handle_input_range_changed(channel)
+        # self._handle_alarm_type_changed(channel)
+        # self._handle_resistive_temp_mode_changed(channel)
+        # self._handle_current_source_changed(channel)
+        # self._handle_resistive_temp_sensor_changed(channel)
 
 
     def _handle_resistive_temp_sensor_changed(self, channel):
