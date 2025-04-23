@@ -34,6 +34,9 @@ class MainController:
         self.view = view
         self.current_max_points = 1000  # Track max points in controller (User input)
 
+        self._recording_state = 0
+        self._optical_state = 0
+
         self._connect_signals()
         self._init_timer()
         self._init_channel_configs()  # Add initialised channels to the drop down menu
@@ -63,7 +66,14 @@ class MainController:
         self.view.config_group.current_source_changed.connect(self._handle_current_source_changed)
         self.view.config_group.resistive_sensor_type_changed.connect(self._handle_resistive_temp_sensor_changed)
 
+        # RTC
+        self.view.sync_rtc.connect(self._handle_rtc_sync)
+
     ## TODO Update the channel config in the model, update the entire structure for that channel each time a param changes
+
+    def _handle_rtc_sync(self):
+        print("Synced rtc time")
+
     def _handle_channel_changed(self, channel: int):
         """Update channel type and update the model."""
         # # Get the current alarm status for the channel

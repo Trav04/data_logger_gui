@@ -328,7 +328,7 @@ class MainWindowView(QMainWindow):
     max_points = pyqtSignal(int)
     channel_visibility_change = pyqtSignal(object)
     axis_range_changed = pyqtSignal(float, float)
-    sync_rtc = pyqtSignal()
+    sync_rtc = pyqtSignal(object)
     toggle_recording = pyqtSignal(bool)
     clear_data = pyqtSignal()
 
@@ -509,7 +509,7 @@ class MainWindowView(QMainWindow):
         rtc_layout.addWidget(self.system_time_label)
 
         sync_rtc_btn = QPushButton("Sync RTC")
-        sync_rtc_btn.clicked.connect(self.sync_rtc.emit)
+        sync_rtc_btn.clicked.connect(self._emit_rtc_time)
         rtc_layout.addWidget(sync_rtc_btn)
         status_layout.addRow("RTC:", rtc_layout)
 
@@ -560,9 +560,11 @@ class MainWindowView(QMainWindow):
             self.recording_status.setStyleSheet("color: red;")
             self.toggle_recording_btn.setText("Start Recording")
 
-    def set_rtc_time(self):
+    def _emit_rtc_time(self):
         self.rtc_status.setText("Synced")
         self.rtc_status.setStyleSheet("color: green;")
+        self.system_time_label.setText(time.strftime('%H:%M:%S'))
+        self.sync_rtc.emit(None)
 
     # def update_rtc_time(self):
     #
