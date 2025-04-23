@@ -307,8 +307,13 @@ class ChannelConfigGroup(QGroupBox):
         """ Add a single string to the ch drop down list """
         self.channel_combo.addItem(channel)
 
-    def set_alarm_occurring(self, status: bool):
-        self.alarm_occurring_led.set_status(status)
+    def set_alarm_occurring(self, status):
+        if status == 1:
+            self.alarm_occurring_led.set_status(True)
+        elif status == 0:
+            self.alarm_occurring_led.set_status(False)
+        else:
+            self.alarm_occurring_led.set_status(status)
 
     def update_channel_config_group(self, channel, alarm_high, alarm_low, input_range, alarm_type, alarm_occurring,
                                     resistive_temp_enabled, resistive_temp_sensor_type, current_source, sensor_type):

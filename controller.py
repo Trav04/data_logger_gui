@@ -38,6 +38,8 @@ class MainController:
         self._recording_state = 0
         self._optical_state = 0
 
+        self._current_channel = 1
+
         self._connect_signals()
         self._init_timer()
         self._init_channel_configs()  # Add initialised channels to the drop down menu
@@ -54,6 +56,7 @@ class MainController:
         self.view.axis_range_changed.connect(self.handle_axis_range_changed)
         self.view.clear_data.connect(self._handle_clear_data)
         self.view.graph_canvas.hover_signal.connect(self._handle_hover)
+
 
         # Device status panel
         self.view.toggle_recording.connect(self._handle_toggle_recording)
@@ -94,6 +97,7 @@ class MainController:
         # Compare channel data to bounds of alarm high and alarm low
         # Set alarm status accordingly after comparison
         # self.model.set_channel_config_param()
+        alarm_state = 0
         channel_config = self.model.get_channel_configs()
         all_channel_data  = self.model.get_data()
         for channel in channel_config:
@@ -106,7 +110,6 @@ class MainController:
             alarm_type = self.model.get_channel_config_param(channel, ALARM_TYPE)
             alarm_low = self.model.get_channel_config_param(channel, ALARM_LOW)
             alarm_high = self.model.get_channel_config_param(channel, ALARM_HIGH)
-            print(all_channel_data)
             if alarm_type == ALARM_TYPE_LIVE:
                 if not (alarm_low < channel_data[len(channel_data) - 1] < alarm_high):
                     self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_OCCURRING)
@@ -118,13 +121,28 @@ class MainController:
             if alarm_type == ALARM_TYPE_DISABLED:
                 self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_NOT_OCCURRING)
 
+
+    def _update_alarm_indicator(self):
+        """ Update the alarm indicator in the view"""
+        # Update view
+        alarm_state = self.model.get_channel_config_param(self._current_channel, ALARM_STATE)
+        self.view.edit_channel_config_view().set_alarm_occurring(alarm_state)
+
     def _handle_channel_changed(self, channel: int):
         """Update channel type and update the model."""
         # # Get the current alarm status for the channel
+        # TODO implement a refresh, so current params aren't over written when channel changed
         # status = self.model.get_channel_configs()[channel][ALARM_OCCURRING]
         # # Set the corresponding alarm state for this channel
         # self.view.config_group.set_alarm_occurring(status)
-        # TODO A thread will update the current channel status
+        self._current_channel = channel
+        self._handle_alarms_changed(channel)
+        self._handle_input_range_changed(channel)
+        self._handle_alarm_type_changed(channel)
+        self._handle_resistive_temp_mode_changed(channel)
+        self._handle_current_source_changed(channel)
+        self._handle_resistive_temp_sensor_changed(channel)
+
 
     def _handle_resistive_temp_sensor_changed(self, channel):
         """ Update the resistive temp sensor type """
@@ -314,5 +332,7 @@ class MainController:
                 )
             # Check and update alarms
             self._check_and_update_alarms()
+            self._update_alarm_indicator()
         else:
             self.view.edit_graph_canvas_view().clear_plot()
+            self.model.clear_data()
