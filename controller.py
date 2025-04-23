@@ -98,24 +98,25 @@ class MainController:
         all_channel_data  = self.model.get_data()
         for channel in channel_config:
             channel_data = all_channel_data[channel]
+
+            # Ensure channel data exists, break if none
+            if not channel_data:
+                break
+
             alarm_type = self.model.get_channel_config_param(channel, ALARM_TYPE)
             alarm_low = self.model.get_channel_config_param(channel, ALARM_LOW)
             alarm_high = self.model.get_channel_config_param(channel, ALARM_HIGH)
+            print(all_channel_data)
             if alarm_type == ALARM_TYPE_LIVE:
-                if not channel_data:
-                    break
                 if not (alarm_low < channel_data[len(channel_data) - 1] < alarm_high):
-                    print("Alarm occurring")
                     self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_OCCURRING)
                 else:
-                    print("Alarm not occurring")
                     self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_NOT_OCCURRING)
             elif alarm_type == ALARM_TYPE_LATCHED:
-                pass
+                if not (alarm_low < channel_data[len(channel_data) - 1] < alarm_high):
+                    self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_OCCURRING)
             if alarm_type == ALARM_TYPE_DISABLED:
-                pass
-
-
+                self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_NOT_OCCURRING)
 
     def _handle_channel_changed(self, channel: int):
         """Update channel type and update the model."""
