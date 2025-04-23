@@ -92,7 +92,7 @@ class DataModel:
         if channel not in self.channel_configs:
             self.channel_configs[channel] = {
                 CHANNEL_TYPE: channel_type,
-                ALARM_HIGH: 100,
+                ALARM_HIGH: 0,
                 ALARM_LOW: 0,
                 INPUT_RANGE: INPUT_RANGE_10V,  # Default to +/-10V
                 ALARM_TYPE: ALARM_TYPE_DISABLED,  # Default to disabled
@@ -216,7 +216,6 @@ class DataModel:
     def get_channel_config_param(self, channel, config_param):
         with self._semaphore_channel_config:
             return self.channel_configs[channel][config_param]
-
 
     def set_channel_config_param(self, channel, config_param, value):
         with self._semaphore_channel_config:

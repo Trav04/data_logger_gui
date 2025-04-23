@@ -3,7 +3,8 @@ from PyQt5.QtCore import QTimer
 import numpy as np
 
 from model import CHANNEL_TYPE_VOLTAGE, INPUT_RANGE, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE, ALARM_STATE, \
-    TEMP_ENABLED, CURRENT_SOURCE, SENSOR_TYPE, TEMP_SENSOR_DISABLED, CURRENT_SOURCE_DISABLED
+    TEMP_ENABLED, CURRENT_SOURCE, SENSOR_TYPE, TEMP_SENSOR_DISABLED, CURRENT_SOURCE_DISABLED, ALARM_TYPE_LIVE, \
+    ALARM_TYPE_LATCHED, ALARM_TYPE_DISABLED, ALARM_OCCURRING, ALARM_NOT_OCCURRING
 from model import CHANNEL_TYPE_TEMPERATURE
 from model import CHANNEL_TYPE_ACCELERATION
 
@@ -74,6 +75,48 @@ class MainController:
     def _handle_rtc_sync(self):
         print("Synced rtc time")
 
+    def _handle_toggle_recording(self):
+        """Toggle recording state and update the view."""
+        # TODO Send recording struct
+        self.view.toggle_recording_status()
+        # Only if fake data used #
+        self._fake_data_index = 0
+        self._init_fake_data()
+
+    def _check_and_update_alarms(self):
+        """Check if alarms are occuring and update the channel configs accordingly."""
+        # Get channel config
+        # Check alarm state
+            # If Live -> set/reset every sample
+            # If Latched -> once set, never reset.
+            # If disabled -> reset all LEDs
+        # Get channel data
+        # Compare channel data to bounds of alarm high and alarm low
+        # Set alarm status accordingly after comparison
+        # self.model.set_channel_config_param()
+        channel_config = self.model.get_channel_configs()
+        all_channel_data  = self.model.get_data()
+        for channel in channel_config:
+            channel_data = all_channel_data[channel]
+            alarm_type = self.model.get_channel_config_param(channel, ALARM_TYPE)
+            alarm_low = self.model.get_channel_config_param(channel, ALARM_LOW)
+            alarm_high = self.model.get_channel_config_param(channel, ALARM_HIGH)
+            if alarm_type == ALARM_TYPE_LIVE:
+                if not channel_data:
+                    break
+                if not (alarm_low < channel_data[len(channel_data) - 1] < alarm_high):
+                    print("Alarm occurring")
+                    self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_OCCURRING)
+                else:
+                    print("Alarm not occurring")
+                    self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_NOT_OCCURRING)
+            elif alarm_type == ALARM_TYPE_LATCHED:
+                pass
+            if alarm_type == ALARM_TYPE_DISABLED:
+                pass
+
+
+
     def _handle_channel_changed(self, channel: int):
         """Update channel type and update the model."""
         # # Get the current alarm status for the channel
@@ -130,13 +173,6 @@ class MainController:
 
         self.model.set_channel_config_param(channel, ALARM_HIGH, high)
         self.model.set_channel_config_param(channel, ALARM_LOW, low)
-
-    def _handle_toggle_recording(self):
-        """Toggle recording state and update the view."""
-        self.view.toggle_recording_status()
-        # Only if fake data used #
-        self._fake_data_index = 0
-        self._init_fake_data()
 
     def _init_fake_data(self):
         """Start a timer that simulates incoming data every 500ms."""
@@ -275,5 +311,7 @@ class MainController:
                     y_min,
                     y_max
                 )
+            # Check and update alarms
+            self._check_and_update_alarms()
         else:
             self.view.edit_graph_canvas_view().clear_plot()
