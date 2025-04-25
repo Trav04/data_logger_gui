@@ -1,4 +1,6 @@
 # controller.py
+from time import sleep
+
 from PyQt5.QtCore import QTimer
 import numpy as np
 from datetime import datetime
@@ -51,7 +53,6 @@ class MainController:
 
         # Initialise heartbeat to MCU
         self.serial.start_heartbeat()
-
 
     def _init_channel_configs(self):
         channel_configs = self.model.get_channel_configs()

@@ -62,7 +62,7 @@ def main():
 
 
 
-    # success = serial._send_struct_ack_wait(rtc_struct_id, rtc_struct_id, year, month, day, hour, minute, second)
+    # success = serial._send_struct_ack_wait(rtc_struct_id, rtc_struct_id, (2025 >> 8) & 0xFF, 2025 & 0xFF, month, day, hour, minute, second)
     #success = serial._send_struct_ack_wait(recorded_struct_id, recorded_struct_id, recording_state)
     # success = serial._send_struct_ack_wait(config_id, config_id, channel_type, channel_id, input_range, alarm_type, alarm_state, alarm_occurring, resistive_temp, current_source, sensor_type)
     # print(success)

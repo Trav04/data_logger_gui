@@ -8,6 +8,7 @@ import time
 from serial_manager import SerialManager
 
 class SerialSendReceiveManager(SerialManager):
+
     """ Class that handles the receiving of data """
     STRUCT_ID_HEARTBEAT = 0x06
     STRUCT_ID_RTC_TIME = 0x01
@@ -22,7 +23,7 @@ class SerialSendReceiveManager(SerialManager):
 
     STRUCT_FORMATS = {
         STRUCT_ID_HEARTBEAT: "B",  # uint8_t beat = 0x00                                                          # SEND TO Control Unit
-        STRUCT_ID_RTC_TIME: "B H 5B",  # struct_id (uint8), year (uint16), month, day, hour, min, sec (5x uint8)  # SEND to Control Unit
+        STRUCT_ID_RTC_TIME: "B B B 5B",  # struct_id (uint8), year (uint16), month, day, hour, min, sec (5x uint8)  # SEND to Control Unit
         STRUCT_ID_CHANNEL_LIVE_DATA: "B B H 5B 8H",  # struct_id (uint8), rtc_struct, 8x uint16 channels          # Receive from Control Unit
         STRUCT_ID_OPTIC_CONNECTION: "B B",  # struct_id (uint8), recording_state (uint8)                          # Receive from Control Unit
         STRUCT_ID_CHANNEL_CONFIG: "B 8B",  # struct_id (uint8), 7x uint8_t values                                 # Send & Receive from Control Unit
@@ -38,6 +39,7 @@ class SerialSendReceiveManager(SerialManager):
         }
         super().__init__()
         self._start_receive_struct_thread()
+        self.count = 0
 
     #### SENDING DATA ####
 
@@ -56,16 +58,11 @@ class SerialSendReceiveManager(SerialManager):
         try:
             packed_data = struct.pack(fmt, *args)
 
-            # Pad data
-            if len(packed_data) < 7:
-                padding = b'\x3B' * (7 - len(packed_data))  # Pad with null bytes
-                packed_data += padding
-                packed_data += b'\r\n'
-            print(f"Sending {struct_id}: {packed_data}")
-
             with self.lock:
                 if self._ser and self._ser.is_open:
                     self._ser.write(packed_data)
+                    print(f"Sending {struct_id}: {packed_data}")
+                    self.count = 1 - self.count
                     self._ser.flush()
                     return True
                 else:
