@@ -4,6 +4,7 @@ import serial
 import struct
 import threading
 import time
+from datetime import datetime
 
 from serial_manager import SerialManager
 
@@ -24,7 +25,7 @@ class SerialSendReceiveManager(SerialManager):
     STRUCT_FORMATS = {
         STRUCT_ID_HEARTBEAT: "B",  # uint8_t beat = 0x00                                                                  # SEND TO Control Unit
         STRUCT_ID_RTC_TIME: "B B B 5B",  # struct_id (uint8), year_high, year_low, month, day, hour, min, sec (5x uint8)  # SEND to Control Unit
-        STRUCT_ID_CHANNEL_LIVE_DATA: "B B H 5B 8H",  # struct_id (uint8), rtc_struct, 8x uint16 channels                  # Receive from Control Unit
+        STRUCT_ID_CHANNEL_LIVE_DATA: "B B B 5B 9H",  # struct_id (uint8), rtc_struct, 8x uint16 channels                  # Receive from Control Unit
         STRUCT_ID_OPTIC_CONNECTION: "B B",  # struct_id (uint8), recording_state (uint8)                                  # Receive from Control Unit
         STRUCT_ID_CHANNEL_CONFIG: "B 8B H H",  # struct_id (uint8), 7x uint8_t values                                     # Send & Receive from Control Unit
         STRUCT_ID_DEVICE_RECORDING_STATE: "B B"  # struct_id (uint8), optic_state (uint8)                                 # Send & Receive from Control Unit
@@ -156,6 +157,8 @@ class SerialSendReceiveManager(SerialManager):
 
     def _parse_channel_live_data(self, unpacked_data: tuple):
         print("Channel Live Data Received:", unpacked_data)
+        timestamp = datetime((unpacked_data[2]<<8) | unpacked_data[3], unpacked_data[4], unpacked_data[5], unpacked_data[6], unpacked_data[7], unpacked_data[8])
+        self._controller.update_live_channel_data(timestamp, unpacked_data[9] / 1000, unpacked_data[10] / 1000, unpacked_data[11] / 1000, unpacked_data[12] / 1000, unpacked_data[13] / 1000, unpacked_data[14] / 1000, unpacked_data[15] / 1000, unpacked_data[16] / 1000)
         # Update hte model's data structure
 
     def _parse_device_recording_state(self, unpacked_data: tuple):
@@ -166,7 +169,6 @@ class SerialSendReceiveManager(SerialManager):
     def _parse_optic_connection(self, unpacked_data: tuple):
         print("Optic channel Data Received:", unpacked_data)
         # self._controller.view_set_optical_state(unpacked_data[1])
-        # TODO Should I receive this or do I infer this
 
     def _parse_channel_config(self, unpacked_data: tuple):
         print("Channel Config Received:", unpacked_data)

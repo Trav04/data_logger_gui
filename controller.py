@@ -308,7 +308,7 @@ class MainController:
         for ch, values in self.model.get_data().items():
             # Build the hover tool tip text
             unit = CHANNEL_TYPE_MAP.get(self.model.get_channel_config_param(ch, CHANNEL_TYPE))
-            text += f"{ch}: {values[closest_idx]:.2f} {unit}\n"
+            text += f"{ch}: {values[closest_idx]:.3f} {unit}\n"
 
         # Update tooltip
         self.view.tooltip_label.setText(text)
@@ -345,7 +345,8 @@ class MainController:
     def update_live_channel_data(self, timestamp, ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8):
         """Update live channel data in the model and update the plot."""
         channel_values = [ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8]
-        self.model.store_live_data()
+        self.model.store_live_data(timestamp, channel_values)
+        print(self.model.get_data())
 
     def update_plot(self):
         """Update plots with truncated data based on current_max_points."""

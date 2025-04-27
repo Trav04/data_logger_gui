@@ -115,7 +115,10 @@ class DataModel:
                 raise ValueError("Expected 8 channel values, got {}".format(len(channel_values)))
 
             # Format the time
-            timestamp_f = datetime.strptime(timestamp, FORMAT_TIMESTAMP)
+            if not isinstance(timestamp, datetime):
+                timestamp_f = datetime.strptime(timestamp, FORMAT_TIMESTAMP)
+            else:
+                timestamp_f = timestamp
 
             # Set initial time reference
             if self.start_time is None:
