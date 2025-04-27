@@ -42,7 +42,7 @@ class MainController:
         # Initialise Serial Manager
         self.serial = SerialSendReceiveManager(self)  # Parse in controller
 
-        self._recording_state = 0
+        # self._recording_state = 0  # Not used for the toggling function at the moment
         self._optical_state = 0
 
         self._current_channel = 1
@@ -117,13 +117,18 @@ class MainController:
     def _handle_toggle_recording(self):
         """Toggle recording state and update the view."""
         # TODO Send recording struct
-        self.start_stop_recording()
+        self.view_start_stop_recording()
         # Only if fake data used #
         # self._fake_data_index = 0
         # self._init_fake_data()
 
-    def start_stop_recording(self):
+    def view_start_stop_recording(self):
+        """ Set the """
         self.view.toggle_recording_status()
+
+    def view_set_optical_state(self, state):
+        self.view.set_optical_state(state)
+
 
     def _check_and_update_alarms(self):
         """

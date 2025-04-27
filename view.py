@@ -370,6 +370,7 @@ class MainWindowView(QMainWindow):
         self._init_ui()
 
         self._is_recording = False
+        self._optical_state = False
 
 
     def _init_ui(self):
@@ -510,9 +511,9 @@ class MainWindowView(QMainWindow):
         status_layout = QFormLayout()
 
         # Optical Link Status
-        self.optical_status = QLabel("Disconnected")  # Default to disconnected
-        self.optical_status.setStyleSheet("color: red;")
-        status_layout.addRow("Optical Link:", self.optical_status)
+        self.optical_state_label = QLabel("Disconnected")  # Default to disconnected
+        self.optical_state_label.setStyleSheet("color: red;")
+        status_layout.addRow("Optical Link:", self.optical_state_label)
 
         # Recording Status and Button
         recording_layout = QHBoxLayout()
@@ -577,6 +578,7 @@ class MainWindowView(QMainWindow):
         self.graph_canvas.clear_plot()
 
     def toggle_recording_status(self):
+        # TODO Implement a boolean param to set the recording state rather than toggling
         self._is_recording = not self._is_recording
         if self._is_recording:
             self.recording_status.setText("Recording")
@@ -605,3 +607,12 @@ class MainWindowView(QMainWindow):
         self.config_group.set_resistive_temp_sensor(resistive_temp_sensor_type)
         self.config_group.set_current_source(current_source)
         # self.config_group.sensor_type_combo.setCurrentText(sensor_type)
+
+    def set_optical_state(self, state: int):
+        self._optical_state = state
+        if state:
+            self.optical_state_label.setText("Connected")
+            self.optical_state_label.setStyleSheet("color: green;")
+        else:
+            self.optical_state_label.setText("Disconnected")
+            self.optical_state_label.setStyleSheet("color: red;")

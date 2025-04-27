@@ -161,10 +161,11 @@ class SerialSendReceiveManager(SerialManager):
     def _parse_device_recording_state(self, unpacked_data: tuple):
         print("Recording State Received:", unpacked_data)
         struct_id, recording_state = unpacked_data
-        self._controller.start_stop_recording()
+        self._controller.view_start_stop_recording()
 
     def _parse_optic_connection(self, unpacked_data: tuple):
         print("Optic channel Data Received:", unpacked_data)
+        # self._controller.view_set_optical_state(unpacked_data[1])
 
     def _parse_channel_config(self, unpacked_data: tuple):
         print("Channel Config Received:", unpacked_data)
