@@ -166,9 +166,13 @@ class SerialSendReceiveManager(SerialManager):
     def _parse_optic_connection(self, unpacked_data: tuple):
         print("Optic channel Data Received:", unpacked_data)
         # self._controller.view_set_optical_state(unpacked_data[1])
+        # TODO Should I receive this or do I infer this
 
     def _parse_channel_config(self, unpacked_data: tuple):
         print("Channel Config Received:", unpacked_data)
+        self._controller.update_channel_config(unpacked_data[1], unpacked_data[2], unpacked_data[3],
+                                               unpacked_data[4], unpacked_data[5], unpacked_data[6],
+                                               unpacked_data[7], unpacked_data[8], unpacked_data[9], unpacked_data[10])
 
     def _receive_structs(self):
         """ Polls for receiving data from the control unit """

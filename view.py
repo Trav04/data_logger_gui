@@ -154,8 +154,10 @@ class ChannelConfigGroup(QGroupBox):
     def __init__(self):
         super().__init__("Channel Configuration")
         self.channel_combo = QComboBox()
-        self.alarm_high_spin = QSpinBox()
-        self.alarm_low_spin = QSpinBox()
+        self.alarm_high_spin = QDoubleSpinBox()
+        self.alarm_high_spin.setDecimals(3)
+        self.alarm_low_spin = QDoubleSpinBox()
+        self.alarm_low_spin.setDecimals(3)
         self.input_range_combo = QComboBox()
         self.alarm_type_combo = QComboBox()
         self.alarm_occurring_led = StatusLED()
@@ -597,13 +599,14 @@ class MainWindowView(QMainWindow):
 
     def update_channel_config_group(self, channel, alarm_high, alarm_low, input_range, alarm_type, alarm_state,
                                     resistive_temp_enabled, resistive_temp_sensor_type, current_source):
+
         self.config_group.set_alarm_low(alarm_low)
         self.config_group.set_alarm_high(alarm_high)
         self.config_group.set_input_range(input_range)
 
         self.config_group.set_alarm_type(alarm_type)
-        # ## self.config_group.alarm_occurring_led.set_status(alarm_state)
-        self.config_group.resistive_temp_checkbox.setChecked(resistive_temp_enabled)
+        # self.config_group.alarm_occurring_led.set_status(alarm_state)
+        # self.config_group.resistive_temp_checkbox.setChecked(resistive_temp_enabled)
         self.config_group.set_resistive_temp_sensor(resistive_temp_sensor_type)
         self.config_group.set_current_source(current_source)
         # self.config_group.sensor_type_combo.setCurrentText(sensor_type)

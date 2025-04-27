@@ -129,6 +129,8 @@ class MainController:
     def view_set_optical_state(self, state):
         self.view.set_optical_state(state)
 
+    def model_set_channel_config(self):
+        pass
 
     def _check_and_update_alarms(self):
         """
@@ -138,12 +140,6 @@ class MainController:
                 # If Latched -> once set, never reset.
                 # If disabled -> reset all LEDs
         """
-        # Get channel config
-
-        # Get channel data
-        # Compare channel data to bounds of alarm high and alarm low
-        # Set alarm status accordingly after comparison
-        # self.model.set_channel_config_param()
         alarm_state = 0
         channel_config = self.model.get_channel_configs()
         all_channel_data  = self.model.get_data()
@@ -176,30 +172,17 @@ class MainController:
 
     def _handle_channel_changed(self, channel: int):
         """Update channel type and update the model."""
-        # # Get the current alarm status for the channel
-        # TODO implement a refresh, so current params aren't over written when channel changed
-        # status = self.model.get_channel_configs()[channel][ALARM_OCCURRING]
-        # # Set the corresponding alarm state for this channel
-        # self.view.config_group.set_alarm_occurring(status)
         self._current_channel = channel
         alarm_high = self.model.get_channel_config_param(channel, ALARM_HIGH)
         alarm_low = self.model.get_channel_config_param(channel, ALARM_LOW)
         input_range = self.model.get_channel_config_param(channel, INPUT_RANGE)
         alarm_type = self.model.get_channel_config_param(channel, ALARM_TYPE)
-        # alarm_occurring = self.model.get_channel_config_param(channel, ALARM_STATE)
+        alarm_occurring = self.model.get_channel_config_param(channel, ALARM_STATE)
         resistive_temp_enabled = self.model.get_channel_config_param(channel, TEMP_ENABLED)
         resistive_temp_sensor_type = self.model.get_channel_config_param(channel, SENSOR_TYPE)
         current_source = self.model.get_channel_config_param(channel, CURRENT_SOURCE)
 
-        self.view.update_channel_config_group(channel, alarm_high, alarm_low, input_range, alarm_type, 1, resistive_temp_enabled, resistive_temp_sensor_type, current_source)
-
-        # self._handle_alarms_changed(channel)
-        # self._handle_input_range_changed(channel)
-        # self._handle_alarm_type_changed(channel)
-        # self._handle_resistive_temp_mode_changed(channel)
-        # self._handle_current_source_changed(channel)
-        # self._handle_resistive_temp_sensor_changed(channel)
-
+        self.view.update_channel_config_group(channel, alarm_high, alarm_low, input_range, alarm_type, alarm_occurring, resistive_temp_enabled, resistive_temp_sensor_type, current_source)
 
     def _handle_resistive_temp_sensor_changed(self, channel):
         """ Update the resistive temp sensor type """
@@ -333,9 +316,36 @@ class MainController:
         self.view.tooltip_label.move(global_x + 15, global_y + 15)
         self.view.tooltip_label.show()
 
-    def update_channel_config(self, channel, config):
+    def update_channel_config(self, channel, channel_type, input_range, alarm_type, alarm_occurring,
+                                    resistive_temp_enabled, current_source, resistive_temp_sensor_type, alarm_high, alarm_low):
         """Update channel config in the model and update the plot."""
-        ## TODO To be implemented. Serial comms will send a channel map, the model should be updated here
+
+        self.model.set_channel_config_param(channel, CHANNEL_TYPE, channel_type)
+        self.model.set_channel_config_param(channel, INPUT_RANGE, input_range)
+        self.model.set_channel_config_param(channel, ALARM_TYPE, alarm_type)
+        self.model.set_channel_config_param(channel, ALARM_STATE, alarm_occurring)
+        self.model.set_channel_config_param(channel, RESISTIVE_TEMP_ENABLED, resistive_temp_enabled)
+        self.model.set_channel_config_param(channel, CURRENT_SOURCE, current_source)
+        self.model.set_channel_config_param(channel, SENSOR_TYPE, resistive_temp_sensor_type)
+        self.model.set_channel_config_param(channel, ALARM_HIGH, alarm_high/1000)
+        self.model.set_channel_config_param(channel, ALARM_LOW, alarm_low/1000)
+
+        # self.view.update_channel_config_group(
+        #     channel,
+        #     alarm_high,
+        #     alarm_low,
+        #     input_range,
+        #     alarm_type,
+        #     alarm_occurring,
+        #     resistive_temp_enabled,
+        #     resistive_temp_sensor_type,
+        #     current_source
+        # ) # TODO Update this
+
+    def update_live_channel_data(self, timestamp, ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8):
+        """Update live channel data in the model and update the plot."""
+        channel_values = [ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8]
+        self.model.store_live_data()
 
     def update_plot(self):
         """Update plots with truncated data based on current_max_points."""
