@@ -40,7 +40,7 @@ class MainController:
         self.current_max_points = 1000  # Track max points in controller (User input)
 
         # Initialise Serial Manager
-        self.serial = SerialSendReceiveManager()
+        self.serial = SerialSendReceiveManager(self)  # Parse in controller
 
         self._recording_state = 0
         self._optical_state = 0
@@ -52,7 +52,21 @@ class MainController:
         self._init_channel_configs()  # Add initialised channels to the drop down menu
 
         # Initialise heartbeat to MCU
-        self.serial.start_heartbeat()
+        # self.serial.start_heartbeat()
+
+        config_id = 0x03
+        channel_type = 0x56
+        channel_id = 0x01
+        input_range = 0x10
+        alarm_type = 0x01
+        alarm_state = 0x01
+        alarm_occurring = 0x01
+        resistive_temp = 0x00
+        current_source = 0x00
+        sensor_type = 0x00
+
+        # self.serial._send_struct(config_id, config_id, channel_id, channel_type, input_range, alarm_type, alarm_state, resistive_temp, current_source, sensor_type, 0x1203, 0x0211)
+        self.serial.send_struct_no_ack(0x01, 0x01, 0x07, 0xE9, 4, 27, 15, 53, 40) # Needs fixing.
 
     def _init_channel_configs(self):
         channel_configs = self.model.get_channel_configs()
@@ -100,14 +114,16 @@ class MainController:
             now.second
         )
 
-
     def _handle_toggle_recording(self):
         """Toggle recording state and update the view."""
         # TODO Send recording struct
-        self.view.toggle_recording_status()
+        self.start_stop_recording()
         # Only if fake data used #
-        self._fake_data_index = 0
-        self._init_fake_data()
+        # self._fake_data_index = 0
+        # self._init_fake_data()
+
+    def start_stop_recording(self):
+        self.view.toggle_recording_status()
 
     def _check_and_update_alarms(self):
         """
@@ -146,7 +162,6 @@ class MainController:
                     self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_OCCURRING)
             if alarm_type == ALARM_TYPE_DISABLED:
                 self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_NOT_OCCURRING)
-
 
     def _update_alarm_indicator(self):
         """ Update the alarm indicator in the view"""
