@@ -66,7 +66,7 @@ class MainController:
         sensor_type = 0x00
 
         # self.serial._send_struct(config_id, config_id, channel_id, channel_type, input_range, alarm_type, alarm_state, resistive_temp, current_source, sensor_type, 0x1203, 0x0211)
-        self.serial.send_struct_no_ack(0x01, 0x01, 0x07, 0xE9, 4, 27, 15, 53, 40) # Needs fixing.
+        # self.serial.send_struct_no_ack(0x01, 0x01, 0x07, 0xE9, 4, 27, 15, 53, 40) # Needs fixing.
 
     def _init_channel_configs(self):
         channel_configs = self.model.get_channel_configs()
@@ -80,7 +80,6 @@ class MainController:
         self.view.axis_range_changed.connect(self.handle_axis_range_changed)
         self.view.clear_data.connect(self._handle_clear_data)
         self.view.graph_canvas.hover_signal.connect(self._handle_hover)
-
 
         # Device status panel
         self.view.toggle_recording.connect(self._handle_toggle_recording)
@@ -183,16 +182,19 @@ class MainController:
         current_source = self.model.get_channel_config_param(channel, CURRENT_SOURCE)
 
         self.view.update_channel_config_group(channel, alarm_high, alarm_low, input_range, alarm_type, alarm_occurring, resistive_temp_enabled, resistive_temp_sensor_type, current_source)
+        print(resistive_temp_enabled)
 
     def _handle_resistive_temp_sensor_changed(self, channel):
         """ Update the resistive temp sensor type """
         sensor = self.view.config_group.get_resistive_sensor_type()
         self.model.set_channel_config_param(channel, SENSOR_TYPE, sensor)
+        self.send_updated_channel_config(channel)
 
     def _handle_current_source_changed(self, channel):
         """Update current source used by the resistive temperature channel """
         current_source = self.view.config_group.get_current_source()
         self.model.set_channel_config_param(channel, CURRENT_SOURCE, current_source)
+        self.send_updated_channel_config(channel)
 
     def _handle_resistive_temp_mode_changed(self, channel):
         """
@@ -210,16 +212,19 @@ class MainController:
         self.model.set_channel_config_param(channel, CHANNEL_TYPE, channel_type)
         # Update resistive temp mode
         self.model.set_channel_config_param(channel, TEMP_ENABLED, resistive_temp_mode)
+        self.send_updated_channel_config(channel)
 
     def _handle_alarm_type_changed(self, channel):
         """Update alarm type for a channel."""
         alarm_type = self.view.config_group.get_alarm_type()
         self.model.set_channel_config_param(channel, ALARM_TYPE, alarm_type)
+        self.send_updated_channel_config(channel)
 
     def _handle_input_range_changed(self, channel):
         """Update input range for a channel."""
         input_range = self.view.config_group.get_input_range()
         self.model.set_channel_config_param(channel, INPUT_RANGE, input_range)
+        self.send_updated_channel_config(channel)
 
     def _handle_alarms_changed(self, channel):
         """Validate and update alarm thresholds for a channel."""
@@ -232,6 +237,7 @@ class MainController:
 
         self.model.set_channel_config_param(channel, ALARM_HIGH, high)
         self.model.set_channel_config_param(channel, ALARM_LOW, low)
+        self.send_updated_channel_config(channel)
 
     def _init_fake_data(self):
         """Start a timer that simulates incoming data every 500ms."""
@@ -315,6 +321,24 @@ class MainController:
         self.view.tooltip_label.adjustSize()
         self.view.tooltip_label.move(global_x + 15, global_y + 15)
         self.view.tooltip_label.show()
+
+    def send_updated_channel_config(self, channel):
+        """Send updated channel config to the controller."""
+        config_id = 0x03
+        channel_type = self.model.get_channel_config_param(channel, CHANNEL_TYPE)
+        channel_id = channel
+        input_range = self.model.get_channel_config_param(channel, INPUT_RANGE)
+        alarm_type = self.model.get_channel_config_param(channel, ALARM_TYPE)
+        alarm_state = self.model.get_channel_config_param(channel, ALARM_STATE)
+        resistive_temp = self.model.get_channel_config_param(channel, TEMP_ENABLED)
+        current_source = self.model.get_channel_config_param(channel, CURRENT_SOURCE)
+        sensor_type = self.model.get_channel_config_param(channel, SENSOR_TYPE)
+        alarm_high = self.model.get_channel_config_param(channel, ALARM_HIGH) * 1000
+        alarm_low = self.model.get_channel_config_param(channel, ALARM_LOW) * 1000
+
+        print(config_id, config_id, channel_id, channel_type, input_range, alarm_type, alarm_state, resistive_temp, current_source, sensor_type, int(alarm_high), int(alarm_low))
+        self.serial.send_struct_no_ack(config_id, config_id, channel_id, channel_type, input_range, alarm_type, alarm_state, resistive_temp, current_source, sensor_type, int(alarm_high), int(alarm_low))
+
 
     def update_channel_config(self, channel, channel_type, input_range, alarm_type, alarm_occurring,
                                     resistive_temp_enabled, current_source, resistive_temp_sensor_type, alarm_high, alarm_low):

@@ -606,10 +606,9 @@ class MainWindowView(QMainWindow):
 
         self.config_group.set_alarm_type(alarm_type)
         # self.config_group.alarm_occurring_led.set_status(alarm_state)
-        # self.config_group.resistive_temp_checkbox.setChecked(resistive_temp_enabled)
+        self.config_group.resistive_temp_checkbox.setChecked(resistive_temp_enabled)
         self.config_group.set_resistive_temp_sensor(resistive_temp_sensor_type)
         self.config_group.set_current_source(current_source)
-        # self.config_group.sensor_type_combo.setCurrentText(sensor_type)
 
     def set_optical_state(self, state: int):
         self._optical_state = state
