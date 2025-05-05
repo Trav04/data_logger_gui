@@ -328,23 +328,23 @@ class MainController:
         self.model.set_channel_config_param(channel, INPUT_RANGE, input_range)
         self.model.set_channel_config_param(channel, ALARM_TYPE, alarm_type)
         self.model.set_channel_config_param(channel, ALARM_STATE, alarm_occurring)
-        self.model.set_channel_config_param(channel, RESISTIVE_TEMP_ENABLED, resistive_temp_enabled)
+        self.model.set_channel_config_param(channel, TEMP_ENABLED, resistive_temp_enabled)
         self.model.set_channel_config_param(channel, CURRENT_SOURCE, current_source)
         self.model.set_channel_config_param(channel, SENSOR_TYPE, resistive_temp_sensor_type)
-        self.model.set_channel_config_param(channel, ALARM_HIGH, alarm_high/1000)
-        self.model.set_channel_config_param(channel, ALARM_LOW, alarm_low/1000)
+        self.model.set_channel_config_param(channel, ALARM_HIGH, alarm_high)  # Store alarms without decimal
+        self.model.set_channel_config_param(channel, ALARM_LOW, alarm_low)
 
-        # self.view.update_channel_config_group(
-        #     channel,
-        #     alarm_high,
-        #     alarm_low,
-        #     input_range,
-        #     alarm_type,
-        #     alarm_occurring,
-        #     resistive_temp_enabled,
-        #     resistive_temp_sensor_type,
-        #     current_source
-        # ) # TODO Update this
+        self.view.update_channel_config_group(
+            channel,
+            alarm_high,
+            alarm_low,
+            input_range,
+            alarm_type,
+            alarm_occurring,
+            resistive_temp_enabled,
+            resistive_temp_sensor_type,
+            current_source
+        )
 
     def update_live_channel_data(self, timestamp, ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8):
         """Update live channel data in the model and update the plot."""
