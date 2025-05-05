@@ -201,6 +201,10 @@ class MainController:
         Update resistive temperature mode for a channel. If resistive mode is checked, set the channel to resistive
         temperature mode, otherwise set the channel back to voltage. Change the channel type and the temp_enabled param
         """
+        # Can only enable temp mode for channels 1-4
+        if channel > 4:
+            return
+
         resistive_temp_mode = self.view.config_group.get_resistive_temp_mode()
         if resistive_temp_mode:
             channel_type = CHANNEL_TYPE_TEMPERATURE
