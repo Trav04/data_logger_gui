@@ -42,7 +42,7 @@ class MainController:
         # Initialise Serial Manager
         self.serial = SerialSendReceiveManager(self)  # Parse in controller
 
-        # self._recording_state = 0  # Not used for the toggling function at the moment
+        self._recording_state = 0
         self._optical_state = 0
 
         self._current_channel = 1
@@ -104,8 +104,9 @@ class MainController:
 
     def _handle_toggle_recording(self):
         """Toggle recording state and update the view."""
-        # TODO Send recording struct
+        self._recording_state ^= 1  # Toggle the recording state
         self.view_start_stop_recording()
+        self.serial.send_recording_status(self._recording_state)
         # Only if fake data used #
         # self._fake_data_index = 0
         # self._init_fake_data()
@@ -161,7 +162,7 @@ class MainController:
     def _handle_channel_changed(self, channel: int):
         """Update channel type and update the model."""
         self._current_channel = channel
-        alarm_high = self.model.get_channel_config_param(channel, ALARM_HIGH) / 1000  s# Alarms have three decimals buffered
+        alarm_high = self.model.get_channel_config_param(channel, ALARM_HIGH) / 1000 # Alarms have three decimals buffered
         alarm_low = self.model.get_channel_config_param(channel, ALARM_LOW) / 1000
         input_range = self.model.get_channel_config_param(channel, INPUT_RANGE)
         alarm_type = self.model.get_channel_config_param(channel, ALARM_TYPE)
@@ -333,7 +334,7 @@ class MainController:
         self.model.set_channel_config_param(channel, SENSOR_TYPE, resistive_temp_sensor_type)
         self.model.set_channel_config_param(channel, ALARM_HIGH, alarm_high)  # Store alarms without decimal
         self.model.set_channel_config_param(channel, ALARM_LOW, alarm_low)
-
+        # Update the view
         self.view.update_channel_config_group(
             channel,
             alarm_high,

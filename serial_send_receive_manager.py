@@ -262,5 +262,5 @@ class SerialSendReceiveManager(SerialManager):
                                        alarm_state, resistive_temp, current_source, sensor_type, int(alarm_high),
                                        int(alarm_low))
 
-def send_recording_status(self):
-        pass
+    def send_recording_status(self, recording_state):
+        self.send_struct_no_ack(self.STRUCT_ID_DEVICE_RECORDING_STATE,self.STRUCT_ID_DEVICE_RECORDING_STATE, recording_state)

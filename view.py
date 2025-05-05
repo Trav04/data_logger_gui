@@ -605,7 +605,7 @@ class MainWindowView(QMainWindow):
         self.config_group.set_input_range(input_range)
         self.config_group.set_alarm_type(alarm_type)
         # self.config_group.alarm_occurring_led.set_status(alarm_state)
-        if channel < 4:
+        if channel <= 4:
             self.config_group.resistive_temp_checkbox.setChecked(resistive_temp_enabled)
         else:
             self.config_group.resistive_temp_checkbox.setChecked(False)
