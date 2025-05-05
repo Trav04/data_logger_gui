@@ -161,8 +161,8 @@ class MainController:
     def _handle_channel_changed(self, channel: int):
         """Update channel type and update the model."""
         self._current_channel = channel
-        alarm_high = self.model.get_channel_config_param(channel, ALARM_HIGH)
-        alarm_low = self.model.get_channel_config_param(channel, ALARM_LOW)
+        alarm_high = self.model.get_channel_config_param(channel, ALARM_HIGH) / 1000  s# Alarms have three decimals buffered
+        alarm_low = self.model.get_channel_config_param(channel, ALARM_LOW) / 1000
         input_range = self.model.get_channel_config_param(channel, INPUT_RANGE)
         alarm_type = self.model.get_channel_config_param(channel, ALARM_TYPE)
         alarm_occurring = self.model.get_channel_config_param(channel, ALARM_STATE)
@@ -228,8 +228,8 @@ class MainController:
             self.view.config_group.alarm_high_spin.setValue(low)
             high = low
 
-        self.model.set_channel_config_param(channel, ALARM_HIGH, high)
-        self.model.set_channel_config_param(channel, ALARM_LOW, low)
+        self.model.set_channel_config_param(channel, ALARM_HIGH, high*1000)
+        self.model.set_channel_config_param(channel, ALARM_LOW, low*1000)
         self.send_updated_channel_config(channel)
 
     def _init_fake_data(self):
@@ -317,20 +317,7 @@ class MainController:
 
     def send_updated_channel_config(self, channel):
         """Send updated channel config to the controller."""
-        config_id = 0x03
-        channel_type = self.model.get_channel_config_param(channel, CHANNEL_TYPE)
-        channel_id = channel
-        input_range = self.model.get_channel_config_param(channel, INPUT_RANGE)
-        alarm_type = self.model.get_channel_config_param(channel, ALARM_TYPE)
-        alarm_state = self.model.get_channel_config_param(channel, ALARM_STATE)
-        resistive_temp = self.model.get_channel_config_param(channel, TEMP_ENABLED)
-        current_source = self.model.get_channel_config_param(channel, CURRENT_SOURCE)
-        sensor_type = self.model.get_channel_config_param(channel, SENSOR_TYPE)
-        alarm_high = self.model.get_channel_config_param(channel, ALARM_HIGH) * 1000
-        alarm_low = self.model.get_channel_config_param(channel, ALARM_LOW) * 1000
-
-        print(config_id, config_id, channel_id, channel_type, input_range, alarm_type, alarm_state, resistive_temp, current_source, sensor_type, int(alarm_high), int(alarm_low))
-        self.serial.send_struct_no_ack(config_id, config_id, channel_id, channel_type, input_range, alarm_type, alarm_state, resistive_temp, current_source, sensor_type, int(alarm_high), int(alarm_low))
+        self.serial.send_channel_config(channel)
 
 
     def update_channel_config(self, channel, channel_type, input_range, alarm_type, alarm_occurring,

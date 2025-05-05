@@ -8,6 +8,9 @@ from datetime import datetime
 
 from serial_manager import SerialManager
 
+from model import CHANNEL_TYPE_VOLTAGE, INPUT_RANGE, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE, ALARM_STATE, \
+    TEMP_ENABLED, CURRENT_SOURCE, SENSOR_TYPE, ALARM_HIGH, ALARM_LOW, CHANNEL_TYPE
+
 class SerialSendReceiveManager(SerialManager):
 
     """ Class that handles the receiving of data """
@@ -24,7 +27,7 @@ class SerialSendReceiveManager(SerialManager):
 
     STRUCT_FORMATS = {
         STRUCT_ID_HEARTBEAT: "B",  # uint8_t beat = 0x00                                                                  # SEND TO Control Unit
-        STRUCT_ID_RTC_TIME: "B H 5B",  # struct_id (uint8), year_high, year_low, month, day, hour, min, sec (5x uint8)  # SEND to Control Unit
+        STRUCT_ID_RTC_TIME: "B H 5B",  # struct_id (uint8), year (uint16), month, day, hour, min, sec (5x uint8)          # SEND to Control Unit
         STRUCT_ID_CHANNEL_LIVE_DATA: "B B B 5B 9H",  # struct_id (uint8), rtc_struct, 8x uint16 channels                  # Receive from Control Unit
         STRUCT_ID_OPTIC_CONNECTION: "B B",  # struct_id (uint8), recording_state (uint8)                                  # Receive from Control Unit
         STRUCT_ID_CHANNEL_CONFIG: "B 8B H H",  # struct_id (uint8), 7x uint8_t values                                     # Send & Receive from Control Unit
@@ -208,7 +211,6 @@ class SerialSendReceiveManager(SerialManager):
 
                         # Parse data
                         self.STRUCT_PARSERS[struct_id](unpacked_data)
-
                     else:
                         time.sleep(0.01)  # Short sleep to prevent CPU spinning
                 else:
@@ -240,8 +242,25 @@ class SerialSendReceiveManager(SerialManager):
             now.second
         )
 
-    def send_channel_config(self):
-        pass
+    def send_channel_config(self, channel):
+        """Gets all of the updated channel config parameters and sends them to the Control Unit"""
+        config_id = 0x03
+        channel_type = self._controller.model.get_channel_config_param(channel, CHANNEL_TYPE)
+        channel_id = channel
+        input_range = self._controller.model.get_channel_config_param(channel, INPUT_RANGE)
+        alarm_type = self._controller.model.get_channel_config_param(channel, ALARM_TYPE)
+        alarm_state = self._controller.model.get_channel_config_param(channel, ALARM_STATE)
+        resistive_temp = self._controller.model.get_channel_config_param(channel, TEMP_ENABLED)
+        current_source = self._controller.model.get_channel_config_param(channel, CURRENT_SOURCE)
+        sensor_type = self._controller.model.get_channel_config_param(channel, SENSOR_TYPE)
+        alarm_high = self._controller.model.get_channel_config_param(channel, ALARM_HIGH)
+        alarm_low = self._controller.model.get_channel_config_param(channel, ALARM_LOW)
 
-    def send_recording_status(self):
+        print(config_id, config_id, channel_id, channel_type, input_range, alarm_type, alarm_state, resistive_temp,
+              current_source, sensor_type, int(alarm_high), int(alarm_low))
+        self.send_struct_no_ack(config_id, config_id, channel_id, channel_type, input_range, alarm_type,
+                                       alarm_state, resistive_temp, current_source, sensor_type, int(alarm_high),
+                                       int(alarm_low))
+
+def send_recording_status(self):
         pass
