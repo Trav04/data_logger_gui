@@ -100,18 +100,7 @@ class MainController:
 
     def _handle_rtc_sync(self):
         print("Synced rtc time")
-        # TODO Send RTC Struct
-        now = datetime.now()
-        success = self.serial.send_struct_ack_wait(
-            self.serial.STRUCT_ID_RTC_TIME,
-            self.serial.STRUCT_ID_RTC_TIME,
-            now.year,
-            now.month,
-            now.day,
-            now.hour,
-            now.minute,
-            now.second
-        )
+        self.serial.send_rtc_time()
 
     def _handle_toggle_recording(self):
         """Toggle recording state and update the view."""

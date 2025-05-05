@@ -24,7 +24,7 @@ class SerialSendReceiveManager(SerialManager):
 
     STRUCT_FORMATS = {
         STRUCT_ID_HEARTBEAT: "B",  # uint8_t beat = 0x00                                                                  # SEND TO Control Unit
-        STRUCT_ID_RTC_TIME: "B B B 5B",  # struct_id (uint8), year_high, year_low, month, day, hour, min, sec (5x uint8)  # SEND to Control Unit
+        STRUCT_ID_RTC_TIME: "B H 5B",  # struct_id (uint8), year_high, year_low, month, day, hour, min, sec (5x uint8)  # SEND to Control Unit
         STRUCT_ID_CHANNEL_LIVE_DATA: "B B B 5B 9H",  # struct_id (uint8), rtc_struct, 8x uint16 channels                  # Receive from Control Unit
         STRUCT_ID_OPTIC_CONNECTION: "B B",  # struct_id (uint8), recording_state (uint8)                                  # Receive from Control Unit
         STRUCT_ID_CHANNEL_CONFIG: "B 8B H H",  # struct_id (uint8), 7x uint8_t values                                     # Send & Receive from Control Unit
@@ -49,7 +49,7 @@ class SerialSendReceiveManager(SerialManager):
         """
         Send struct over serial with no acknowledgement wait
         :param struct_id: the id of the struct being sent
-        :param args: the number of arguments sent in that struct
+        :param args: the arguments sent in that struct of the specified ID
         :return: True if the args are sent, false otherwise
         """
         if struct_id not in self.STRUCT_FORMATS:
@@ -225,3 +225,23 @@ class SerialSendReceiveManager(SerialManager):
         """ Starts the receiving struct thread """
         receive_thread = threading.Thread(target=self._receive_structs, daemon=True)
         receive_thread.start()
+
+    def send_rtc_time(self):
+        """Calculate the current time and send it to the Control unit"""
+        now = datetime.now()
+        self.send_struct_no_ack(
+            self.STRUCT_ID_RTC_TIME,
+            self.STRUCT_ID_RTC_TIME,
+            now.year,
+            now.month,
+            now.day,
+            now.hour,
+            now.minute,
+            now.second
+        )
+
+    def send_channel_config(self):
+        pass
+
+    def send_recording_status(self):
+        pass
