@@ -55,13 +55,14 @@ class SerialSendReceiveManager(SerialManager):
         :param args: the arguments sent in that struct of the specified ID
         :return: True if the args are sent, false otherwise
         """
+        # time.sleep(0.2)
         if struct_id not in self.STRUCT_FORMATS:
             print(f"Error: Unknown struct type {struct_id}")
             return False
 
         fmt = self.STRUCT_FORMATS[struct_id]
         try:
-            packed_data = struct.pack(fmt, *args)
+            packed_data = bytearray(struct.pack(fmt, *args))
 
             with self.lock:
                 if self._ser and self._ser.is_open:
@@ -152,7 +153,7 @@ class SerialSendReceiveManager(SerialManager):
     def start_heartbeat(self):
         """ Starts the heart beat thread to periodically send heart beat signals to the device"""
         self._send_heartbeat()
-        heartbeat = threading.Timer(1.5, self.start_heartbeat)
+        heartbeat = threading.Timer(0.5, self.start_heartbeat)
         heartbeat.daemon = True  # Set as daemon thread (exit when main thread exits)
         heartbeat.start()
 
@@ -193,7 +194,7 @@ class SerialSendReceiveManager(SerialManager):
 
                     if struct_id in self.STRUCT_PARSERS:
                         # Send ACK
-                        self._send_acknowledgement_packet(struct_id)
+                        # self._send_acknowledgement_packet(struct_id)
 
                         struct_format = self.STRUCT_FORMATS[struct_id]
                         struct_size = struct.calcsize(struct_format)  # size includes the struct id

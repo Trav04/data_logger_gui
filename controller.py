@@ -51,6 +51,12 @@ class MainController:
         self._init_timer()
         self._init_channel_configs()  # Add initialised channels to the drop down menu
 
+        # Channel config debounce
+        self._config_update_timer = QTimer()
+        self._config_update_timer.setSingleShot(True)
+        self._config_update_timer.timeout.connect(self._send_debounced_config)
+        self._pending_channel_config = None  # Store the channel to send after debounce
+
         # Initialise heartbeat to MCU
         # self.serial.start_heartbeat()
 
@@ -67,6 +73,14 @@ class MainController:
 
         # self.serial._send_struct(config_id, config_id, channel_id, channel_type, input_range, alarm_type, alarm_state, resistive_temp, current_source, sensor_type, 0x1203, 0x0211)
         # self.serial.send_struct_no_ack(0x01, 0x01, 0x07, 0xE9, 4, 27, 15, 53, 40) # Needs fixing.
+    def schedule_channel_config_send(self, channel):
+        self._pending_channel_config = channel
+        self._config_update_timer.start(100)  # e.g., 100 ms debounce
+
+    def _send_debounced_config(self):
+        if self._pending_channel_config is not None:
+            self.send_updated_channel_config(self._pending_channel_config)
+            self._pending_channel_config = None
 
     def _init_channel_configs(self):
         channel_configs = self.model.get_channel_configs()
@@ -172,19 +186,19 @@ class MainController:
         current_source = self.model.get_channel_config_param(channel, CURRENT_SOURCE)
 
         self.view.update_channel_config_group(channel, alarm_high, alarm_low, input_range, alarm_type, alarm_occurring, resistive_temp_enabled, resistive_temp_sensor_type, current_source)
-        print(resistive_temp_enabled)
+        # print(resistive_temp_enabled)
 
     def _handle_resistive_temp_sensor_changed(self, channel):
         """ Update the resistive temp sensor type """
         sensor = self.view.config_group.get_resistive_sensor_type()
         self.model.set_channel_config_param(channel, SENSOR_TYPE, sensor)
-        self.send_updated_channel_config(channel)
+        self.schedule_channel_config_send(channel)
 
     def _handle_current_source_changed(self, channel):
         """Update current source used by the resistive temperature channel """
         current_source = self.view.config_group.get_current_source()
         self.model.set_channel_config_param(channel, CURRENT_SOURCE, current_source)
-        self.send_updated_channel_config(channel)
+        self.schedule_channel_config_send(channel)
 
     def _handle_resistive_temp_mode_changed(self, channel):
         """
@@ -206,19 +220,19 @@ class MainController:
         self.model.set_channel_config_param(channel, CHANNEL_TYPE, channel_type)
         # Update resistive temp mode
         self.model.set_channel_config_param(channel, TEMP_ENABLED, resistive_temp_mode)
-        self.send_updated_channel_config(channel)
+        self.schedule_channel_config_send(channel)
 
     def _handle_alarm_type_changed(self, channel):
         """Update alarm type for a channel."""
         alarm_type = self.view.config_group.get_alarm_type()
         self.model.set_channel_config_param(channel, ALARM_TYPE, alarm_type)
-        self.send_updated_channel_config(channel)
+        self.schedule_channel_config_send(channel)
 
     def _handle_input_range_changed(self, channel):
         """Update input range for a channel."""
         input_range = self.view.config_group.get_input_range()
         self.model.set_channel_config_param(channel, INPUT_RANGE, input_range)
-        self.send_updated_channel_config(channel)
+        self.schedule_channel_config_send(channel)
 
     def _handle_alarms_changed(self, channel):
         """Validate and update alarm thresholds for a channel."""
@@ -231,7 +245,7 @@ class MainController:
 
         self.model.set_channel_config_param(channel, ALARM_HIGH, high*1000)
         self.model.set_channel_config_param(channel, ALARM_LOW, low*1000)
-        self.send_updated_channel_config(channel)
+        self.schedule_channel_config_send(channel)
 
     def _init_fake_data(self):
         """Start a timer that simulates incoming data every 500ms."""
