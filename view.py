@@ -150,6 +150,7 @@ class ChannelConfigGroup(QGroupBox):
     resistive_temp_mode_changed = pyqtSignal(int)
     current_source_changed = pyqtSignal(int)
     resistive_sensor_type_changed = pyqtSignal(int)
+    receive_button_pressed = pyqtSignal(int)
 
 
     def __init__(self):
@@ -165,6 +166,7 @@ class ChannelConfigGroup(QGroupBox):
         self.resistive_temp_checkbox = QCheckBox("Enable Temperature (CH1-CH4 ONLY)")
         self.current_source_combo = QComboBox()
         self.sensor_type_combo = QComboBox()
+        self.receive_button = QPushButton("Receive Changes")
 
         self._setup_ui()
         self._connect_internal_signals()
@@ -201,6 +203,9 @@ class ChannelConfigGroup(QGroupBox):
         temp_layout.addWidget(self.sensor_type_combo)
         layout.addRow(self.resistive_temp_checkbox, temp_layout)
 
+        # Add Apply button at the bottom
+        layout.addRow(self.receive_button)
+
         self.setLayout(layout)
 
     def _toggle_temp_config(self, checked):
@@ -217,6 +222,12 @@ class ChannelConfigGroup(QGroupBox):
         self.resistive_temp_checkbox.toggled.connect(self._emit_resistive_temp_mode_changed)
         self.current_source_combo.currentTextChanged.connect(self._emit_current_source_changed)
         self.sensor_type_combo.currentTextChanged.connect(self._emit_resistive_temp_sensor_changed)
+        self.receive_button.clicked.connect(self._emit_config_recieved_button_pressed)
+
+    def _emit_config_recieved_button_pressed(self):
+        channel = int(self.get_selected_channel())
+        if channel:
+            self.receive_button_pressed.emit(channel)
 
     def _emit_alarm_type_changed(self):
         channel = int(self.get_selected_channel())
@@ -603,6 +614,7 @@ class MainWindowView(QMainWindow):
 
     def update_channel_config_group(self, channel, alarm_high, alarm_low, input_range, alarm_type, alarm_state,
                                     resistive_temp_enabled, resistive_temp_sensor_type, current_source):
+        """ Updates the channel config parameters on the view """
         with self._view_config_semaphore:
             self.config_group.set_alarm_low(alarm_low)
             self.config_group.set_alarm_high(alarm_high)
