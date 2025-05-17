@@ -21,17 +21,17 @@ from model import ALARM_LOW
 from serial_send_receive_manager import SerialSendReceiveManager
 
 FAKE_DATA = [
-    ("2025-03-08_12-30-15.123", [3.45, 2.78, 25.6, 4.12, 0.12, -0.05, 0.08, 26.0]),
-    ("2025-03-08_12-30-16.456", [3.43, 2.81, 25.4, 4.18, 0.20, -0.03, 0.15, 26.2]),
-    ("2025-03-08_12-30-17.789", [3.47, 2.76, 25.7, 4.10, 0.09, -0.07, 0.05, 25.8]),
-    ("2025-03-08_12-30-19.012", [3.52, 2.79, 26.3, 4.20, 0.11, -0.12, 0.18, 26.6]),
-    ("2025-03-08_12-30-20.345", [3.39, 2.75, 25.1, 4.00, 0.05, 0.02, 0.01, 25.4]),
-    ("2025-03-08_12-30-21.678", [3.46, 2.84, 26.5, 4.19, 0.23, -0.06, 0.19, 26.9]),
-    ("2025-03-08_12-30-23.001", [3.37, 2.72, 25.0, 4.03, 0.04, -0.01, 0.00, 25.3]),
-    ("2025-03-08_12-30-24.334", [3.55, 2.85, 26.7, 4.22, 0.25, -0.14, 0.22, 27.0]),
-    ("2025-03-08_12-30-25.667", [3.36, 2.70, 24.9, 3.99, 0.03, 0.01, -0.01, 25.2]),
-    ("2025-03-08_12-30-27.000", [3.58, 2.87, 26.9, 4.25, 0.28, -0.16, 0.25, 27.2]),
-    ("2025-03-08_12-30-28.333", [3.34, 2.69, 24.8, 3.97, 0.02, 0.03, -0.02, 25.0])
+    ("2025-03-08_12-30-15-123", [3.45, 2.78, 25.6, 4.12, 0.12, -0.05, 0.08, 26.0]),
+    ("2025-03-08_12-30-16-456", [3.43, 2.81, 25.4, 4.18, 0.20, -0.03, 0.15, 26.2]),
+    ("2025-03-08_12-30-17-789", [3.47, 2.76, 25.7, 4.10, 0.09, -0.07, 0.05, 25.8]),
+    ("2025-03-08_12-30-19-012", [3.52, 2.79, 26.3, 4.20, 0.11, -0.12, 0.18, 26.6]),
+    ("2025-03-08_12-30-20-345", [3.39, 2.75, 25.1, 4.00, 0.05, 0.02, 0.01, 25.4]),
+    ("2025-03-08_12-30-21-678", [3.46, 2.84, 26.5, 4.19, 0.23, -0.06, 0.19, 26.9]),
+    ("2025-03-08_12-30-23-001", [3.37, 2.72, 25.0, 4.03, 0.04, -0.01, 0.00, 25.3]),
+    ("2025-03-08_12-30-24-334", [3.55, 2.85, 26.7, 4.22, 0.25, -0.14, 0.22, 27.0]),
+    ("2025-03-08_12-30-25-667", [3.36, 2.70, 24.9, 3.99, 0.03, 0.01, -0.01, 25.2]),
+    ("2025-03-08_12-30-27-000", [3.58, 2.87, 26.9, 4.25, 0.28, -0.16, 0.25, 27.2]),
+    ("2025-03-08_12-30-28-333", [3.34, 2.69, 24.8, 3.97, 0.02, 0.03, -0.02, 25.0])
 ]
 
 
@@ -137,8 +137,8 @@ class MainController:
         self.view_start_stop_recording()
         self.serial.send_recording_status(self._recording_state)
         # Only if fake data used #
-        # self._fake_data_index = 0
-        # self._init_fake_data()
+        self._fake_data_index = 0
+        self._init_fake_data()
 
     def view_start_stop_recording(self):
         """ Set the recording state on the view """
@@ -159,14 +159,17 @@ class MainController:
                 # If Latched -> once set, never reset.
                 # If disabled -> reset all LEDs
         """
+        print("Checking alarms")
         channel_config = self.model.get_channel_configs()
         all_channel_data  = self.model.get_data()
+        print(all_channel_data)
         for channel in channel_config:
             channel_data = all_channel_data[channel]
             alarm_state = self.model.get_channel_config_param(channel, ALARM_STATE)
 
             # Ensure channel data exists, break if none
             if not channel_data:
+                self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_NOT_OCCURRING)
                 break
 
             alarm_type = self.model.get_channel_config_param(channel, ALARM_TYPE)
@@ -279,7 +282,7 @@ class MainController:
     def add_data(self, timestamp, data):
         """Add data to the model and update the plot."""
         self.model.store_live_data(timestamp, data)
-        self.update_plot()
+        # self.update_plot()
 
     def _init_timer(self):
         self.timer = QTimer()
@@ -392,7 +395,7 @@ class MainController:
         """Update live channel data in the model and update the plot."""
         channel_values = [ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8]
         self.model.store_live_data(timestamp, channel_values)
-        print(self.model.get_data())
+        # print(self.model.get_data())
 
     def update_plot(self):
         """Update plots with truncated data based on current_max_points."""

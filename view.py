@@ -606,6 +606,16 @@ class MainWindowView(QMainWindow):
             self.recording_status.setStyleSheet("color: red;")
             self.toggle_recording_btn.setText("Start Recording")
 
+        self.config_group.channel_combo.setEnabled(not self._is_recording)
+        self.config_group.alarm_high_spin.setEnabled(not self._is_recording)
+        self.config_group.alarm_low_spin.setEnabled(not self._is_recording)
+        self.config_group.input_range_combo.setEnabled(not self._is_recording)
+        self.config_group.alarm_type_combo.setEnabled(not self._is_recording)
+        self.config_group.resistive_temp_checkbox.setEnabled(not self._is_recording)
+        self.config_group.current_source_combo.setEnabled(not self._is_recording)
+        self.config_group.sensor_type_combo.setEnabled(not self._is_recording)
+        self.config_group.receive_button.setEnabled(not self._is_recording)
+
     def _emit_rtc_time(self):
         self.rtc_status.setText("Synced")
         self.rtc_status.setStyleSheet("color: green;")
