@@ -159,12 +159,9 @@ class MainController:
                 # If Latched -> once set, never reset.
                 # If disabled -> reset all LEDs
         """
-        print("Checking alarms")
         channel_config = self.model.get_channel_configs()
         all_channel_data  = self.model.get_data()
         for channel in channel_config.keys():
-            print(channel)
-            print("Channel config: ", channel_config)
             channel_data = all_channel_data[channel]
             alarm_state = self.model.get_channel_config_param(channel, ALARM_STATE)
 
