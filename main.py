@@ -1,4 +1,6 @@
 import sys
+import time
+
 from PyQt5.QtWidgets import QApplication
 from model import DataModel
 from view import MainWindowView
@@ -26,6 +28,7 @@ def main():
 
     # Create the controller
     controller = MainController(model, view)
+
 
     # Show the GUI
     view.show()

@@ -1,5 +1,4 @@
-# SerialSendReceiveManager.py
-
+import queue
 import serial
 import struct
 import threading
@@ -43,8 +42,10 @@ class SerialSendReceiveManager(SerialManager):
             0x05: self._parse_device_recording_state
         }
         self._controller = controller
-        self._start_receive_struct_thread()
         self.count = 0
+        # self._send_heartbeat()
+        # self.receive_structs_5_secs()
+        self._start_receive_struct_thread()
 
     #### SENDING DATA ####
 
@@ -163,6 +164,8 @@ class SerialSendReceiveManager(SerialManager):
         print("Channel Live Data Received:", unpacked_data)
         timestamp = datetime((unpacked_data[2]<<8) | unpacked_data[3], unpacked_data[4], unpacked_data[5], unpacked_data[6], unpacked_data[7], unpacked_data[8])
         self._controller.update_live_channel_data(timestamp, unpacked_data[9] / 1000, unpacked_data[10] / 1000, unpacked_data[11] / 1000, unpacked_data[12] / 1000, unpacked_data[13] / 1000, unpacked_data[14] / 1000, unpacked_data[15] / 1000, unpacked_data[16] / 1000)
+        self._controller.view_set_optical_state(1)
+        self._controller.optical_timer = time.time()  # Sets to now
         # Update the model's data structure
 
     def _parse_device_recording_state(self, unpacked_data: tuple):
@@ -177,8 +180,12 @@ class SerialSendReceiveManager(SerialManager):
     def _parse_channel_config(self, unpacked_data: tuple):
         print("Channel Config Received:", unpacked_data)
         self._controller.update_channel_config(unpacked_data[1], unpacked_data[2], unpacked_data[3],
-                                               unpacked_data[4], unpacked_data[5], unpacked_data[6],
-                                               unpacked_data[7], unpacked_data[8], unpacked_data[9], unpacked_data[10])
+                                           unpacked_data[4], unpacked_data[5], unpacked_data[6],
+                                           unpacked_data[7], unpacked_data[8], unpacked_data[9], unpacked_data[10])
+
+    # def _parse_alarm_states(self, unpacked_data: tuple):
+    #     print("Alarm States Received:", unpacked_data)
+
 
     def _receive_structs(self):
         """ Polls for receiving data from the control unit """
@@ -224,8 +231,55 @@ class SerialSendReceiveManager(SerialManager):
                 print(f"Unexpected error in receive thread: {e}")
                 time.sleep(1)
 
+    def receive_structs_5_secs(self):
+        """ Polls for receiving data from the control unit """
+        cur_time = time.time()
+        while (time.time() - cur_time) < 5:
+            try:
+                if not self._ser or not self._ser.is_open:
+                    time.sleep(1)  # Avoid tight loop if port is closed
+                    continue
+
+                # Use select with a timeout to prevent blocking indefinitely
+                if self._ser.in_waiting > 0:
+                    struct_id = self._ser.read(1)[0]  # Extract the struct id from the first byte
+
+                    if struct_id in self.STRUCT_PARSERS:
+                        # Send ACK
+                        # self._send_acknowledgement_packet(struct_id)
+
+                        struct_format = self.STRUCT_FORMATS[struct_id]
+                        struct_size = struct.calcsize(struct_format)  # size includes the struct id
+
+                        struct_data = self._ser.read(struct_size - 1)  # -1 as struct ID (1 byte) already read
+                        print("Struct ID", struct_id)
+                        print("Struct Data", struct_data)
+
+                        if len(struct_data) != (struct_size - 1):
+                            print("RECEIVE ERROR: Incomplete data received!")
+                            continue  # Fail gracefully and skip this data
+
+                        # Unpack the data into a tuple (excluding the struct_id)
+                        unpacked_data = struct.unpack(struct_format, bytes([struct_id]) + struct_data)
+
+                        # Parse data
+                        self.STRUCT_PARSERS[struct_id](unpacked_data)
+                    else:
+                        time.sleep(0.01)  # Short sleep to prevent CPU spinning
+                else:
+                    time.sleep(0.01)  # Short sleep when no data is available
+            except (serial.SerialException, OSError) as e:
+                print(f"Serial communication error: {e}")
+                self._close()
+                time.sleep(1)  # Prevent tight error loop
+            except Exception as e:
+                print(f"Unexpected error in receive thread: {e}")
+                time.sleep(1)
+
+
     def _start_receive_struct_thread(self):
         """ Starts the receiving struct thread """
+        time.sleep(0.5)  # Allow some time for full initialization
         receive_thread = threading.Thread(target=self._receive_structs, daemon=True)
         receive_thread.start()
 

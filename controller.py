@@ -1,4 +1,6 @@
 # controller.py
+import threading
+import time
 from time import sleep
 
 from PyQt5.QtCore import QTimer
@@ -46,6 +48,8 @@ class MainController:
         self._optical_state = 0
 
         self._current_channel = 1
+        # Optical state timer
+        self.optical_timer = 0
 
         self._connect_signals()
         self._init_timer()
@@ -57,22 +61,32 @@ class MainController:
         self._config_update_timer.timeout.connect(self._send_debounced_config)
         self._pending_channel_config = None  # Store the channel to send after debounce
 
-        # Initialise heartbeat to MCU
+        # # Initialise heartbeat to MCU
         self.serial.start_heartbeat()
+        self.start_optical_check_thread()
 
-        config_id = 0x03
-        channel_type = 0x56
-        channel_id = 0x01
-        input_range = 0x10
-        alarm_type = 0x01
-        alarm_state = 0x01
-        alarm_occurring = 0x01
-        resistive_temp = 0x00
-        current_source = 0x00
-        sensor_type = 0x00
+        # Initialisation time
+        self.cur_time = time.time()
+        self._initialised = False
+        threading.Timer(1, self._initialise_view_delayed).start()
 
-        # self.serial._send_struct(config_id, config_id, channel_id, channel_type, input_range, alarm_type, alarm_state, resistive_temp, current_source, sensor_type, 0x1203, 0x0211)
-        # self.serial.send_struct_no_ack(0x01, 0x01, 0x07, 0xE9, 4, 27, 15, 53, 40) # Needs fixing.
+
+
+    def start_optical_check_thread(self):
+        self._check_optical_connection()
+        timer = threading.Timer(0.5, self.start_optical_check_thread)
+        timer.daemon = True
+        timer.start()
+
+    def _check_optical_connection(self):
+        if time.time() - self.optical_timer > 1.5:
+            self.optical_timer = time.time()
+            self.view_set_optical_state(0)  # Set the optical connection to disconnected
+
+    def _initialise_view_delayed(self):
+        self._initialised = True
+        # self._handle_channel_changed(self._current_channel)  # update het view for the current channel
+
     def schedule_channel_config_send(self, channel):
         self._pending_channel_config = channel
         self._config_update_timer.start(100)  # e.g., 100 ms debounce
@@ -126,10 +140,11 @@ class MainController:
         # self._init_fake_data()
 
     def view_start_stop_recording(self):
-        """ Set the """
+        """ Set the recording state on the view """
         self.view.toggle_recording_status()
 
     def view_set_optical_state(self, state):
+        """ Set the optical state on the view """
         self.view.set_optical_state(state)
 
     def model_set_channel_config(self):
@@ -143,11 +158,11 @@ class MainController:
                 # If Latched -> once set, never reset.
                 # If disabled -> reset all LEDs
         """
-        alarm_state = 0
         channel_config = self.model.get_channel_configs()
         all_channel_data  = self.model.get_data()
         for channel in channel_config:
             channel_data = all_channel_data[channel]
+            alarm_state = self.model.get_channel_config_param(channel, ALARM_STATE)
 
             # Ensure channel data exists, break if none
             if not channel_data:
@@ -162,7 +177,7 @@ class MainController:
                 else:
                     self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_NOT_OCCURRING)
             elif alarm_type == ALARM_TYPE_LATCHED:
-                if not (alarm_low < channel_data[len(channel_data) - 1] < alarm_high):
+                if not (alarm_low < channel_data[len(channel_data) - 1] < alarm_high) and alarm_state != ALARM_OCCURRING:
                     self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_OCCURRING)
             if alarm_type == ALARM_TYPE_DISABLED:
                 self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_NOT_OCCURRING)
@@ -184,9 +199,8 @@ class MainController:
         resistive_temp_enabled = self.model.get_channel_config_param(channel, TEMP_ENABLED)
         resistive_temp_sensor_type = self.model.get_channel_config_param(channel, SENSOR_TYPE)
         current_source = self.model.get_channel_config_param(channel, CURRENT_SOURCE)
-
         self.view.update_channel_config_group(channel, alarm_high, alarm_low, input_range, alarm_type, alarm_occurring, resistive_temp_enabled, resistive_temp_sensor_type, current_source)
-        # print(resistive_temp_enabled)
+        print(resistive_temp_enabled)
 
     def _handle_resistive_temp_sensor_changed(self, channel):
         """ Update the resistive temp sensor type """
@@ -348,18 +362,19 @@ class MainController:
         self.model.set_channel_config_param(channel, SENSOR_TYPE, resistive_temp_sensor_type)
         self.model.set_channel_config_param(channel, ALARM_HIGH, alarm_high)  # Store alarms without decimal
         self.model.set_channel_config_param(channel, ALARM_LOW, alarm_low)
-        # Update the view
-        self.view.update_channel_config_group(
-            channel,
-            alarm_high,
-            alarm_low,
-            input_range,
-            alarm_type,
-            alarm_occurring,
-            resistive_temp_enabled,
-            resistive_temp_sensor_type,
-            current_source
-        )
+        # Update the view TODO Make this function more reliable
+        # if self._initialised:
+        #     self.view.update_channel_config_group(
+        #         channel,
+        #         alarm_high,
+        #         alarm_low,
+        #         input_range,
+        #         alarm_type,
+        #         alarm_occurring,
+        #         resistive_temp_enabled,
+        #         resistive_temp_sensor_type,
+        #         current_source
+        #     )
 
     def update_live_channel_data(self, timestamp, ch1, ch2, ch3, ch4, ch5, ch6, ch7, ch8):
         """Update live channel data in the model and update the plot."""

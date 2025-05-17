@@ -1,4 +1,5 @@
 # view.py
+import threading
 import time
 
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
@@ -369,55 +370,58 @@ class MainWindowView(QMainWindow):
         self._ymin = 0
         self._ymax = 10
 
-        self._init_ui()
 
         self._is_recording = False
         self._optical_state = False
 
+        self._view_config_semaphore = threading.Semaphore()
+
+        self._init_ui()
 
     def _init_ui(self):
-        central_widget = QWidget()
-        self.setCentralWidget(central_widget)
-        main_layout = QHBoxLayout(central_widget)
+        with self._view_config_semaphore:
+            central_widget = QWidget()
+            self.setCentralWidget(central_widget)
+            main_layout = QHBoxLayout(central_widget)
 
-        # Plot Area
-        self.graph_canvas = GraphCanvas()
-        main_layout.addWidget(self.graph_canvas, 75)
+            # Plot Area
+            self.graph_canvas = GraphCanvas()
+            main_layout.addWidget(self.graph_canvas, 75)
 
-        # Control Panel
-        control_panel = QScrollArea()
-        control_widget = QWidget()
-        self.control_layout = QVBoxLayout(control_widget)
-        control_panel.setWidget(control_widget)
-        control_panel.setWidgetResizable(True)
-        main_layout.addWidget(control_panel, 25)
+            # Control Panel
+            control_panel = QScrollArea()
+            control_widget = QWidget()
+            self.control_layout = QVBoxLayout(control_widget)
+            control_panel.setWidget(control_widget)
+            control_panel.setWidgetResizable(True)
+            main_layout.addWidget(control_panel, 25)
 
-        # Add Channel Configuration Group
-        self.config_group = ChannelConfigGroup()
-        self.control_layout.addWidget(self.config_group)
+            # Add Channel Configuration Group
+            self.config_group = ChannelConfigGroup()
+            self.control_layout.addWidget(self.config_group)
 
-        # Replay group
-        self._create_replay_controls()
+            # Replay group
+            self._create_replay_controls()
 
-        # Visibility group
-        self._create_visibility_controls()
+            # Visibility group
+            self._create_visibility_controls()
 
-        # Display Settings group
-        self._create_display_settings()
+            # Display Settings group
+            self._create_display_settings()
 
-        # Device status group
-        self._create_device_status_panel()
+            # Device status group
+            self._create_device_status_panel()
 
-        # Clear data button
-        self._create_clear_button()
+            # Clear data button
+            self._create_clear_button()
 
-        # Tooltip Label
-        self.tooltip_label = QLabel()
-        self.tooltip_label.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint)
-        self.tooltip_label.setStyleSheet("background-color: #ffffe0; border: 1px solid black; padding: 2px;")
-        self.tooltip_label.hide()
+            # Tooltip Label
+            self.tooltip_label = QLabel()
+            self.tooltip_label.setWindowFlags(Qt.ToolTip | Qt.FramelessWindowHint)
+            self.tooltip_label.setStyleSheet("background-color: #ffffe0; border: 1px solid black; padding: 2px;")
+            self.tooltip_label.hide()
 
-        self.status_bar = self.statusBar()
+            self.status_bar = self.statusBar()
 
     from PyQt5.QtWidgets import QFrame  # Add this import
 
@@ -599,18 +603,19 @@ class MainWindowView(QMainWindow):
 
     def update_channel_config_group(self, channel, alarm_high, alarm_low, input_range, alarm_type, alarm_state,
                                     resistive_temp_enabled, resistive_temp_sensor_type, current_source):
+        with self._view_config_semaphore:
+            self.config_group.set_alarm_low(alarm_low)
+            self.config_group.set_alarm_high(alarm_high)
+            self.config_group.set_input_range(input_range)
+            self.config_group.set_alarm_type(alarm_type)
+            # self.config_group.alarm_occurring_led.set_status(alarm_state)
+            if channel <= 4:
+                self.config_group.resistive_temp_checkbox.setChecked(resistive_temp_enabled)
+            else:
+                self.config_group.resistive_temp_checkbox.setChecked(False)
+            self.config_group.set_resistive_temp_sensor(resistive_temp_sensor_type)
+            self.config_group.set_current_source(current_source)
 
-        self.config_group.set_alarm_low(alarm_low)
-        self.config_group.set_alarm_high(alarm_high)
-        self.config_group.set_input_range(input_range)
-        self.config_group.set_alarm_type(alarm_type)
-        # self.config_group.alarm_occurring_led.set_status(alarm_state)
-        if channel <= 4:
-            self.config_group.resistive_temp_checkbox.setChecked(resistive_temp_enabled)
-        else:
-            self.config_group.resistive_temp_checkbox.setChecked(False)
-        self.config_group.set_resistive_temp_sensor(resistive_temp_sensor_type)
-        self.config_group.set_current_source(current_source)
 
     def set_optical_state(self, state: int):
         self._optical_state = state

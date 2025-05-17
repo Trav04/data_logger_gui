@@ -38,7 +38,7 @@ RESISTIVE_TEMP_DISABLED = 0x00
 
 ## String values for view for all params
 
-FORMAT_TIMESTAMP = "%Y-%m-%d_%H-%M-%S.%f"
+FORMAT_TIMESTAMP = "%Y-%m-%d_%H-%M-%S-%f"
 
 TIMESTAMP = "Timestamp"
 
