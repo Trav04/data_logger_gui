@@ -58,7 +58,7 @@ class MainController:
         self._pending_channel_config = None  # Store the channel to send after debounce
 
         # Initialise heartbeat to MCU
-        # self.serial.start_heartbeat()
+        self.serial.start_heartbeat()
 
         config_id = 0x03
         channel_type = 0x56

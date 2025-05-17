@@ -27,10 +27,10 @@ class SerialSendReceiveManager(SerialManager):
 
     STRUCT_FORMATS = {
         STRUCT_ID_HEARTBEAT: "B",  # uint8_t beat = 0x00                                                                  # SEND TO Control Unit
-        STRUCT_ID_RTC_TIME: "B H 5B",  # struct_id (uint8), year (uint16), month, day, hour, min, sec (5x uint8)          # SEND to Control Unit
-        STRUCT_ID_CHANNEL_LIVE_DATA: "B B B 5B 9H",  # struct_id (uint8), rtc_struct, 8x uint16 channels                  # Receive from Control Unit
+        STRUCT_ID_RTC_TIME: "B B B 5B",  # struct_id (uint8), year (uint16), month, day, hour, min, sec (5x uint8)          # SEND to Control Unit
+        STRUCT_ID_CHANNEL_LIVE_DATA: "B B B 5B 9h",  # struct_id (uint8), rtc_struct, 8x uint16 channels                  # Receive from Control Unit
         STRUCT_ID_OPTIC_CONNECTION: "B B",  # struct_id (uint8), recording_state (uint8)                                  # Receive from Control Unit
-        STRUCT_ID_CHANNEL_CONFIG: "B 8B H H",  # struct_id (uint8), 7x uint8_t values                                     # Send & Receive from Control Unit
+        STRUCT_ID_CHANNEL_CONFIG: "B 8B h h",  # struct_id (uint8), 7x uint8_t values                                     # Send & Receive from Control Unit
         STRUCT_ID_DEVICE_RECORDING_STATE: "B B"  # struct_id (uint8), optic_state (uint8)                                 # Send & Receive from Control Unit
     }
 
@@ -55,7 +55,7 @@ class SerialSendReceiveManager(SerialManager):
         :param args: the arguments sent in that struct of the specified ID
         :return: True if the args are sent, false otherwise
         """
-        # time.sleep(0.2)
+        time.sleep(0.5)
         if struct_id not in self.STRUCT_FORMATS:
             print(f"Error: Unknown struct type {struct_id}")
             return False
@@ -163,7 +163,7 @@ class SerialSendReceiveManager(SerialManager):
         print("Channel Live Data Received:", unpacked_data)
         timestamp = datetime((unpacked_data[2]<<8) | unpacked_data[3], unpacked_data[4], unpacked_data[5], unpacked_data[6], unpacked_data[7], unpacked_data[8])
         self._controller.update_live_channel_data(timestamp, unpacked_data[9] / 1000, unpacked_data[10] / 1000, unpacked_data[11] / 1000, unpacked_data[12] / 1000, unpacked_data[13] / 1000, unpacked_data[14] / 1000, unpacked_data[15] / 1000, unpacked_data[16] / 1000)
-        # Update hte model's data structure
+        # Update the model's data structure
 
     def _parse_device_recording_state(self, unpacked_data: tuple):
         print("Recording State Received:", unpacked_data)
@@ -235,7 +235,8 @@ class SerialSendReceiveManager(SerialManager):
         self.send_struct_no_ack(
             self.STRUCT_ID_RTC_TIME,
             self.STRUCT_ID_RTC_TIME,
-            now.year,
+            (now.year >> 8) & 0xFF,
+            now.year & 0xFF,
             now.month,
             now.day,
             now.hour,
