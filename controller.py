@@ -162,19 +162,20 @@ class MainController:
         print("Checking alarms")
         channel_config = self.model.get_channel_configs()
         all_channel_data  = self.model.get_data()
-        print(all_channel_data)
-        for channel in channel_config:
+        for channel in channel_config.keys():
+            print(channel)
+            print("Channel config: ", channel_config)
             channel_data = all_channel_data[channel]
             alarm_state = self.model.get_channel_config_param(channel, ALARM_STATE)
 
             # Ensure channel data exists, break if none
             if not channel_data:
                 self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_NOT_OCCURRING)
-                break
+                continue
 
             alarm_type = self.model.get_channel_config_param(channel, ALARM_TYPE)
-            alarm_low = self.model.get_channel_config_param(channel, ALARM_LOW)
-            alarm_high = self.model.get_channel_config_param(channel, ALARM_HIGH)
+            alarm_low = self.model.get_channel_config_param(channel, ALARM_LOW) / 1000
+            alarm_high = self.model.get_channel_config_param(channel, ALARM_HIGH) / 1000
             if alarm_type == ALARM_TYPE_LIVE:
                 if not (alarm_low < channel_data[len(channel_data) - 1] < alarm_high):
                     self.model.set_channel_config_param(channel, ALARM_STATE, ALARM_OCCURRING)
