@@ -1,4 +1,3 @@
-# view.py
 import threading
 import time
 
@@ -9,6 +8,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+from serial.tools import list_ports
 
 from model import CHANNEL_TYPE_ACCELERATION, INPUT_RANGE_10V, INPUT_RANGE_1V, ALARM_TYPE_DISABLED, ALARM_TYPE_LIVE, \
     ALARM_TYPE_LATCHED, CURRENT_SOURCE_10UA, CURRENT_SOURCE_200UA, TEMP_SENSOR_THERMISTOR, TEMP_SENSOR_RTD, \
@@ -372,6 +372,7 @@ class MainWindowView(QMainWindow):
     sync_rtc = pyqtSignal(object)
     toggle_recording = pyqtSignal(bool)
     clear_data = pyqtSignal()
+    com_port_selected = pyqtSignal(str)
 
     def __init__(self):
         super().__init__()
@@ -423,6 +424,9 @@ class MainWindowView(QMainWindow):
             # Device status group
             self._create_device_status_panel()
 
+            # Create com port selector
+            self._create_com_port_selector()
+
             # Clear data button
             self._create_clear_button()
 
@@ -434,7 +438,33 @@ class MainWindowView(QMainWindow):
 
             self.status_bar = self.statusBar()
 
-    from PyQt5.QtWidgets import QFrame  # Add this import
+    def _port_selected(self, index):
+        """Handle selection of a COM port."""
+        selected_port = self.port_selector_combo.itemData(index)
+        self.com_port_selected.emit(selected_port)
+        print(f"Selected COM port: {selected_port}")
+
+    def _create_com_port_selector(self):
+        """Create COM port selector group."""
+        display_group = QGroupBox("COM Port Selector")
+        layout = QFormLayout()
+
+        # COM Port ComboBox
+        self.port_selector_combo = QComboBox()
+        self._refresh_com_ports()
+        self.port_selector_combo.currentIndexChanged.connect(self._port_selected)
+        layout.addRow("Select COM Port:", self.port_selector_combo)
+
+        display_group.setLayout(layout)
+        self.control_layout.addWidget(display_group)
+
+    def _refresh_com_ports(self):
+        """Populate combo box with available COM ports."""
+        ports = list_ports.comports()
+        self.port_selector_combo.clear()
+        for port in ports:
+            display_name = f"{port.device}"
+            self.port_selector_combo.addItem(display_name, port.device)
 
     def _create_display_settings(self):
         """Add controls for display settings like Y-axis range and max points."""

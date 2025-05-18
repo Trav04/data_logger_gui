@@ -1,8 +1,4 @@
-# SerialManager.py
-
-
 import serial
-import struct
 import threading
 import time
 
@@ -35,3 +31,30 @@ class SerialManager:
                 print("Attempting to reconnect...")
                 self._connect_serial()
             time.sleep(0.5)  # Retry every 2 seconds
+
+    def set_port(self, port: str):
+        """Sets the serial port, reconnecting if already connected."""
+        try:
+            # Disconnect if already connected
+            if hasattr(self, '_serial') and self._serial.is_open:
+                print(f"Closing current port: {self._serial.port}")
+                self._ser.close()
+
+            # Set new port
+            self._port = port
+            print(f"Setting new port: {port}")
+
+            # Create and open new serial connection
+            self._ser = serial.Serial(
+                port=self._port,
+                baudrate=self._baudrate,
+            )
+
+            if self._ser.is_open:
+                print(f"Connected to {self._port}")
+            else:
+                print(f"Failed to open {self._port}")
+
+        except serial.SerialException as e:
+            print(f"Serial error: {e}")
+

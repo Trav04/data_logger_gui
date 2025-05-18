@@ -1,4 +1,3 @@
-import queue
 import serial
 import struct
 import threading

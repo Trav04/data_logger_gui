@@ -1,5 +1,4 @@
 import sys
-import time
 
 from PyQt5.QtWidgets import QApplication
 from model import DataModel, INPUT_RANGE_10V, ALARM_TYPE_DISABLED, ALARM_NOT_OCCURRING, RESISTIVE_TEMP_ENABLED, \

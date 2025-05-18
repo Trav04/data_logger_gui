@@ -1,4 +1,3 @@
-# controller.py
 import threading
 import time
 from time import sleep
@@ -125,10 +124,15 @@ class MainController:
         # RTC
         self.view.sync_rtc.connect(self._handle_rtc_sync)
 
+        # Com port
+        self.view.com_port_selected.connect(self._handle_com_port_selected)
     ## TODO Update the channel config in the model, update the entire structure for that channel each time a param changes
+    def _handle_com_port_selected(self, port: str):
+        """ Sets the com port """
+        self.serial.set_port(port)
 
     def _handle_rtc_sync(self):
-        print("Synced rtc time")
+        """ Sends the system time over serial for syncing with CU """
         self.serial.send_rtc_time()
 
     def _handle_toggle_recording(self):
@@ -147,9 +151,6 @@ class MainController:
     def view_set_optical_state(self, state):
         """ Set the optical state on the view """
         self.view.set_optical_state(state)
-
-    def model_set_channel_config(self):
-        pass
 
     def _check_and_update_alarms(self):
         """
