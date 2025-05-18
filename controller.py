@@ -136,9 +136,9 @@ class MainController:
         self._recording_state ^= 1  # Toggle the recording state
         self.view_start_stop_recording()
         self.serial.send_recording_status(self._recording_state)
-        # Only if fake data used #
-        self._fake_data_index = 0
-        self._init_fake_data()
+        ### Only if fake data used ####
+        # self._fake_data_index = 0
+        # self._init_fake_data()
 
     def view_start_stop_recording(self):
         """ Set the recording state on the view """
