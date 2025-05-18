@@ -126,6 +126,7 @@ class MainController:
 
         # Com port
         self.view.com_port_selected.connect(self._handle_com_port_selected)
+
     ## TODO Update the channel config in the model, update the entire structure for that channel each time a param changes
     def _handle_com_port_selected(self, port: str):
         """ Sets the com port """
@@ -446,7 +447,7 @@ class MainController:
                     y_max
                 )
             # Check and update alarms
-            self._check_and_update_alarms()
+            # self._check_and_update_alarms()  # Recieve alarms from LCD, don't calculate on PC software
             self._update_alarm_indicator()
         else:
             self.view.edit_graph_canvas_view().clear_plot()

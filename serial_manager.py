@@ -27,7 +27,6 @@ class SerialManager:
         """Continuously attempts to reconnect if the serial port is disconnected."""
         while True:
             if self._ser is None or not self._ser.is_open:
-                self._close()
                 print("Attempting to reconnect...")
                 self._connect_serial()
             time.sleep(0.5)  # Retry every 2 seconds
@@ -57,4 +56,5 @@ class SerialManager:
 
         except serial.SerialException as e:
             print(f"Serial error: {e}")
+            self._ser = None
 
