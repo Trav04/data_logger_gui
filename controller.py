@@ -365,8 +365,6 @@ class MainController:
         self.model.set_channel_config_param(channel, SENSOR_TYPE, resistive_temp_sensor_type)
         self.model.set_channel_config_param(channel, ALARM_HIGH, alarm_high)  # Store alarms without decimal
         self.model.set_channel_config_param(channel, ALARM_LOW, alarm_low)
-        # Update the view TODO Make this function more reliable
-        # if self._initialised:
 
 
     def update_channel_config_view_button(self):

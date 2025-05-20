@@ -4,7 +4,7 @@ import time
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
                              QFileDialog, QLabel, QSpinBox, QComboBox, QFormLayout, QGroupBox, QScrollArea,
                              QCheckBox, QDoubleSpinBox, QFrame)
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QColor
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -390,6 +390,10 @@ class MainWindowView(QMainWindow):
 
         self._init_ui()
 
+        self.rtc_timer = QTimer(self)
+        self.rtc_timer.timeout.connect(self._update_time_display)
+        self.rtc_timer.start(1000)  # 1000 ms = 1 second
+
     def _init_ui(self):
         with self._view_config_semaphore:
             central_widget = QWidget()
@@ -645,6 +649,9 @@ class MainWindowView(QMainWindow):
         self.config_group.current_source_combo.setEnabled(not self._is_recording)
         self.config_group.sensor_type_combo.setEnabled(not self._is_recording)
         self.config_group.receive_button.setEnabled(not self._is_recording)
+
+    def _update_time_display(self):
+        self.system_time_label.setText(time.strftime('%H:%M:%S'))
 
     def _emit_rtc_time(self):
         self.rtc_status.setText("Synced")
